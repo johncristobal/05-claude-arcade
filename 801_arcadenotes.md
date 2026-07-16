@@ -32,4 +32,8 @@ Protection rules para rama main
 - agregamos instruciones para que la rama main no pueda subir sin permisos
 
 
+Agramos de nuvo skill de spec de profe
+    - npx skills@latest add Klerith/fernando-skills 
+Sal y vielve a entrar para activar skills
+
 
