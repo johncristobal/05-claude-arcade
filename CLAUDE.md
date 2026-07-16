@@ -32,3 +32,7 @@ Assume other APIs/conventions may have shifted too — verify against the docs d
 - App Router only (`app/` directory) — `app/layout.tsx` is the root layout (Geist Sans/Mono fonts via `next/font/google`, wired into Tailwind via CSS variables in `app/globals.css`); `app/page.tsx` is the default CNA landing page, not yet replaced.
 - Tailwind v4 via `@tailwindcss/postcss`, configured in `app/globals.css` using `@theme inline` (no `tailwind.config.js` — v4 is CSS-first).
 - Path alias `@/*` maps to project root (`tsconfig.json`).
+
+## Skills
+
+Use /frontend-design to design user interface

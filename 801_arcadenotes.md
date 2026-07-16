@@ -31,9 +31,20 @@ Protection rules para rama main
 - Setteings - branches - main
 - agregamos instruciones para que la rama main no pueda subir sin permisos
 
-
 Agramos de nuvo skill de spec de profe
     - npx skills@latest add Klerith/fernando-skills 
-Sal y vielve a entrar para activar skills
+Sa; y vielve a entrar
 
+* Pull request
+Ahora esta segura la rama main, para que no podamos subir sin pull reqeust
+merge y borramos rama
 
+### frontend skill
+Skill para diseno de interfaz de usuario
+    - npx skills add https://github.com/anthropics/skills --skill frontend-design
+
+agregamos nota en claude.md
+'## Skills'
+Use /frontend-design to design user interface
+
+### spec mvp 
