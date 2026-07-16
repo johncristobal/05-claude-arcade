@@ -24,4 +24,12 @@ claude
 Para cargar claude.md con lo que vaya leyebdo claude
 
 ### Inicializaciones
+Creamos repo para subir proyecto - ✅
+
+WOOOOOOW
+Protection rules para rama main 
+- Setteings - branches - main
+- agregamos instruciones para que la rama main no pueda subir sin permisos
+
+
 
