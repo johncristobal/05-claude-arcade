@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Approved
+- **Estado:** Implementado
 - **Dependencias:** Ninguna (primer spec del proyecto)
 - **Fecha:** 2026-07-17
 - **Objetivo:** Implementar la interfaz visual completa de Arcade Vault (biblioteca, detalle de juego, reproductor placeholder, autenticación mock y salón de la fama) en Next.js App Router, portando el prototipo estático de `references/templates/`, sin implementar lógica real de ningún juego.
