@@ -48,3 +48,8 @@ agregamos nota en claude.md
 Use /frontend-design to design user interface
 
 ### spec mvp 
+
+/spec vamos a crear mvp de arcade bot. hay que implmentar las pantallas que se encuentran en @references/templates/.                                                            
+Solamente es la parte visual. no hay que implementar ningun juego.
+
+
