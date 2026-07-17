@@ -52,4 +52,9 @@ Use /frontend-design to design user interface
 /spec vamos a crear mvp de arcade bot. hay que implmentar las pantallas que se encuentran en @references/templates/.                                                            
 Solamente es la parte visual. no hay que implementar ningun juego.
 
+### mcp playwright
+https://playwright.dev/docs/getting-started-mcp
+instalmos:
+    - claude mcp add playwright npx @playwright/mcp@latest
+
 
