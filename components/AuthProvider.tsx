@@ -16,12 +16,20 @@ function subscribe(callback: () => void) {
   return () => window.removeEventListener("storage", callback);
 }
 
+let cachedRaw: string | null = null;
+let cachedUser: User | null = null;
+
 function getSnapshot(): User | null {
-  try {
-    return JSON.parse(localStorage.getItem("av_user") || "null");
-  } catch {
-    return null;
+  const raw = localStorage.getItem("av_user");
+  if (raw !== cachedRaw) {
+    cachedRaw = raw;
+    try {
+      cachedUser = raw ? JSON.parse(raw) : null;
+    } catch {
+      cachedUser = null;
+    }
   }
+  return cachedUser;
 }
 
 function getServerSnapshot(): User | null {
