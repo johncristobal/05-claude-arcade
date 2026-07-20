@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Approved
+- **Estado:** Implementado
 - **Dependencias:** `02-home-about.md` (Implementado/Approved) — reemplaza el mock UI del formulario de contacto en `app/acerca-de/page.tsx`
 - **Fecha:** 2026-07-20
 - **Objetivo:** Conectar el formulario de contacto de `/acerca-de` a un envío real de correo vía Resend, a través de un Route Handler propio, manteniendo la UI de éxito existente y agregando validación server-side y un estado de error.
@@ -73,16 +73,16 @@ No se agregan tipos TypeScript nuevos ni estructuras persistentes (no hay `local
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` compila sin errores de tipos ni de lint.
-- [ ] `.env.example` existe versionado con `RESEND_API_KEY` y `CONTACT_EMAIL` como placeholders (sin valores reales).
-- [ ] `.env.local` (no versionado) contiene los valores reales y no aparece en `git status`.
-- [ ] `POST /api/contact` con body válido (`name`, `email`, `message` no vacíos) envía un correo real vía Resend y responde `200 { ok: true }`.
-- [ ] `POST /api/contact` con algún campo vacío o `email` con formato inválido responde `400 { ok: false, error }` sin llamar a Resend.
-- [ ] `POST /api/contact` con `RESEND_API_KEY` inválida o error de Resend responde `500 { ok: false, error }`.
-- [ ] En `/acerca-de`, enviar el formulario con campos vacíos dispara el shake (comportamiento actual, sin cambios).
-- [ ] En `/acerca-de`, enviar el formulario completo muestra "ENVIANDO…" (botón deshabilitado) mientras espera, y al confirmarse el envío muestra el bloque de éxito terminal existente con el nombre ingresado.
-- [ ] En `/acerca-de`, si el envío falla (simulando error de servidor), se muestra un mensaje de error inline debajo del botón, el formulario permanece visible con los datos ingresados, y el usuario puede reintentar manualmente.
-- [ ] El correo recibido en `CONTACT_EMAIL` contiene nombre, email y mensaje del formulario.
+- [x] `npm run build` compila sin errores de tipos ni de lint.
+- [x] `.env.example` existe versionado con `RESEND_API_KEY` y `CONTACT_EMAIL` como placeholders (sin valores reales).
+- [x] `.env.local` (no versionado) contiene los valores reales y no aparece en `git status`.
+- [x] `POST /api/contact` con body válido (`name`, `email`, `message` no vacíos) envía un correo real vía Resend y responde `200 { ok: true }`.
+- [x] `POST /api/contact` con algún campo vacío o `email` con formato inválido responde `400 { ok: false, error }` sin llamar a Resend.
+- [x] `POST /api/contact` con `RESEND_API_KEY` inválida o error de Resend responde `500 { ok: false, error }`.
+- [x] En `/acerca-de`, enviar el formulario con campos vacíos dispara el shake (comportamiento actual, sin cambios).
+- [x] En `/acerca-de`, enviar el formulario completo muestra "ENVIANDO…" (botón deshabilitado) mientras espera, y al confirmarse el envío muestra el bloque de éxito terminal existente con el nombre ingresado.
+- [x] En `/acerca-de`, si el envío falla (simulando error de servidor), se muestra un mensaje de error inline debajo del botón, el formulario permanece visible con los datos ingresados, y el usuario puede reintentar manualmente.
+- [x] El correo recibido en `CONTACT_EMAIL` contiene nombre, email y mensaje del formulario.
 
 ## Decisiones tomadas y descartadas
 
