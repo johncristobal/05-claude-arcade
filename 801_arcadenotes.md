@@ -57,4 +57,7 @@ https://playwright.dev/docs/getting-started-mcp
 instalmos:
     - claude mcp add playwright npx @playwright/mcp@latest
 
+### resend for developers
+Para enviar correos gratituitos
+https://resend.com/pricing
 
