@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Draft
+- **Estado:** approved
 - **Dependencias:** `01-mvp-visual-pantallas.md` (Implementado) — reutiliza `Nav`, `GameCard`, `lib/data.ts`, `globals.css`
 - **Fecha:** 2026-07-20
 - **Objetivo:** Portar las pantallas Home (landing) y Acerca de (about + contacto) desde `references/templates/home-about/` a Next.js App Router, mover la biblioteca actual de `/` a `/biblioteca`, y actualizar el `Nav` global a 4 rutas (Inicio, Biblioteca, Salón de la Fama, Acerca de).
