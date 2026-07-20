@@ -23,12 +23,19 @@ export async function POST(request: Request) {
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   try {
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: process.env.CONTACT_EMAIL as string,
       subject: `Nuevo mensaje de contacto de ${name.trim()}`,
       text: `Nombre: ${name.trim()}\nEmail: ${email.trim()}\n\nMensaje:\n${message.trim()}`,
     });
+
+    if (error) {
+      return Response.json(
+        { ok: false, error: "No se pudo enviar el mensaje. Intentá de nuevo." },
+        { status: 500 }
+      );
+    }
 
     return Response.json({ ok: true });
   } catch {
