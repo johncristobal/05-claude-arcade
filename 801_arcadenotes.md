@@ -60,4 +60,3 @@ instalmos:
 ### resend for developers
 Para enviar correos gratituitos
 https://resend.com/pricing
-
