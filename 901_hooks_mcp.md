@@ -29,3 +29,16 @@ Just for this project
 
 ### mcps
 
+OJO - LLM accede solo a desarrollo, NO PROD
+- apoicamos migraciones a prod 
+
+https://supabase.com/dashboard/project/uworqrfrwyjoglantqhi?connectTab=mcp&showConnect=true
+Creamos base datos supabse
+- creamos cuenta y cramos entiorno
+
+- desde la consiola
+claude mcp add --scope project --transport http supabase "https://mcp.supabase.com/mcp?project_ref=uworqrfrwyjoglantqhi"
+/mcp para habiliatar csupabse
+authenticate y listo
+ya podemos tirar comando en claude para preguntar 
+
