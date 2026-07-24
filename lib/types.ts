@@ -30,3 +30,8 @@ export interface SavedScore {
   name: string;
   at: number; // Date.now()
 }
+
+export interface PresenceGuest {
+  name: string; // "INVITADO_4821"
+  online_at: string; // ISO timestamp, new Date().toISOString()
+}
