@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { GAMES } from "@/lib/data";
 import type { SavedScore } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
+import { useRocasGame } from "@/lib/games/rocas/useRocasGame";
 
 export default function GamePlayerPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,29 +14,81 @@ export default function GamePlayerPage() {
   const { user } = useAuth();
 
   const game = GAMES.find((g) => g.id === id);
+  const isRocas = game?.id === "rocas";
 
-  const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(3);
-  const [paused, setPaused] = useState(false);
+  // Se destructura de inmediato: leer `rocas.campo` repetidas veces en el
+  // render hace que el linter de React Compiler trate todo el objeto como
+  // si contuviera una ref (por `canvasRef`) y bloquee la lectura de los
+  // demás campos durante el render. Destructurar una vez evita eso.
+  const {
+    canvasRef: rocasCanvasRef,
+    score: rocasScore,
+    lives: rocasLives,
+    level: rocasLevel,
+    state: rocasState,
+    paused: rocasPaused,
+    pause: rocasPause,
+    resume: rocasResume,
+    forceGameOver: rocasForceGameOver,
+    restart: rocasRestart,
+    dispose: rocasDispose,
+  } = useRocasGame();
+
+  const [fakeScore, setFakeScore] = useState(0);
+  const [fakeLives, setFakeLives] = useState(3);
+  const [fakePaused, setFakePaused] = useState(false);
   const [over, setOver] = useState(false);
   const [nameOverride, setNameOverride] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const name = nameOverride ?? (user ? user.name : "INVITADO");
-  const level = Math.floor(score / 2500) + 1;
+
+  const score = isRocas ? rocasScore : fakeScore;
+  const lives = isRocas ? rocasLives : fakeLives;
+  const paused = isRocas ? rocasPaused : fakePaused;
+  const level = isRocas ? rocasLevel : Math.floor(fakeScore / 2500) + 1;
+  const gameOver = isRocas ? rocasState === "gameover" : over;
 
   useEffect(() => {
-    if (!game || over || paused) return;
-    const t = setInterval(() => setScore((s) => s + Math.floor(10 + Math.random() * 90)), 220);
+    if (!game || over || fakePaused || isRocas) return;
+    const t = setInterval(
+      () => setFakeScore((s) => s + Math.floor(10 + Math.random() * 90)),
+      220,
+    );
     return () => clearInterval(t);
-  }, [game, over, paused]);
+  }, [game, over, fakePaused, isRocas]);
 
   if (!game) notFound();
 
-  const endGame = () => setOver(true);
+  const togglePause = () => {
+    if (isRocas) {
+      if (rocasPaused) rocasResume();
+      else rocasPause();
+    } else {
+      setFakePaused((p) => !p);
+    }
+  };
+
+  const endGame = () => {
+    if (isRocas) rocasForceGameOver();
+    else setOver(true);
+  };
+
+  const exit = () => {
+    if (isRocas && rocasState === "playing" && !rocasPaused) {
+      if (!window.confirm("¿Salir ahora? Perderás la partida en curso."))
+        return;
+      rocasDispose();
+    }
+    router.push(`/juegos/${game.id}`);
+  };
+
   const restart = () => {
-    setScore(0);
-    setLives(3);
-    setPaused(false);
+    if (isRocas) rocasRestart();
+    else {
+      setFakeScore(0);
+      setFakeLives(3);
+      setFakePaused(false);
+    }
     setOver(false);
     setSaved(false);
     setNameOverride(null);
@@ -43,7 +96,9 @@ export default function GamePlayerPage() {
 
   const saveScore = () => {
     try {
-      const all: SavedScore[] = JSON.parse(localStorage.getItem("av_scores") || "[]");
+      const all: SavedScore[] = JSON.parse(
+        localStorage.getItem("av_scores") || "[]",
+      );
       all.push({ game: game.id, score, name, at: Date.now() });
       localStorage.setItem("av_scores", JSON.stringify(all));
     } catch {
@@ -76,13 +131,13 @@ export default function GamePlayerPage() {
           </div>
         </div>
         <div className="hud-actions">
-          <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
+          <button className="btn yellow" onClick={togglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
           <button className="btn magenta" onClick={endGame}>
             FIN
           </button>
-          <button className="btn ghost" onClick={() => router.push(`/juegos/${game.id}`)}>
+          <button className="btn ghost" onClick={exit}>
             SALIR
           </button>
         </div>
@@ -90,22 +145,39 @@ export default function GamePlayerPage() {
 
       <div className="crt">
         <div className="crt-screen">
-          <div className="game-arena">
-            <div className="grid-floor"></div>
-            <div className="enemy e1"></div>
-            <div className="enemy e2"></div>
-            <div className="enemy e3"></div>
-            <div className="player-ship"></div>
-          </div>
+          {isRocas ? (
+            <canvas
+              ref={rocasCanvasRef}
+              width={800}
+              height={600}
+              style={{ width: "100%", height: "100%", display: "block" }}
+            />
+          ) : (
+            <div className="game-arena">
+              <div className="grid-floor"></div>
+              <div className="enemy e1"></div>
+              <div className="enemy e2"></div>
+              <div className="enemy e3"></div>
+              <div className="player-ship"></div>
+            </div>
+          )}
           {paused && (
-            <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
+            <div
+              className="crt-content"
+              style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}
+            >
               <div>
                 <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
                   EN PAUSA
                 </div>
                 <div
                   className="mono"
-                  style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 10, letterSpacing: "0.16em" }}
+                  style={{
+                    fontSize: 11,
+                    color: "var(--ink-dim)",
+                    marginTop: 10,
+                    letterSpacing: "0.16em",
+                  }}
                 >
                   PULSA REANUDAR PARA CONTINUAR
                 </div>
@@ -115,14 +187,12 @@ export default function GamePlayerPage() {
         </div>
         <div className="crt-bottom">
           <span className="led">SEÑAL OK</span>
-          <span>
-            {game.title} · CRT-83 · 60 HZ
-          </span>
+          <span>{game.title} · CRT-83 · 60 HZ</span>
           <span>CARGA · 1MB</span>
         </div>
       </div>
 
-      {over && (
+      {gameOver && (
         <div className="modal-bd">
           <div className="modal">
             <h2>FIN DEL JUEGO</h2>
@@ -132,7 +202,9 @@ export default function GamePlayerPage() {
               <div className="input-row">
                 <input
                   value={name}
-                  onChange={(e) => setNameOverride(e.target.value.toUpperCase().slice(0, 10))}
+                  onChange={(e) =>
+                    setNameOverride(e.target.value.toUpperCase().slice(0, 10))
+                  }
                   placeholder="TUS INICIALES"
                 />
                 <button className="btn yellow" onClick={saveScore}>
