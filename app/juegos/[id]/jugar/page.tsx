@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
 import { GAMES } from "@/lib/data";
-import type { SavedScore } from "@/lib/types";
+import { saveScore as saveScoreRemote } from "@/lib/supabase/scores";
 import { useAuth } from "@/components/AuthProvider";
 import { useRocasGame } from "@/lib/games/rocas/useRocasGame";
 
@@ -95,16 +95,9 @@ export default function GamePlayerPage() {
   };
 
   const saveScore = () => {
-    try {
-      const all: SavedScore[] = JSON.parse(
-        localStorage.getItem("av_scores") || "[]",
-      );
-      all.push({ game: game.id, score, name, at: Date.now() });
-      localStorage.setItem("av_scores", JSON.stringify(all));
-    } catch {
-      // ignore
-    }
-    setSaved(true);
+    saveScoreRemote({ gameId: game.id, name, score }).then(() =>
+      setSaved(true),
+    );
   };
 
   return (
