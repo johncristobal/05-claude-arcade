@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Approved
+- **Estado:** Done
 - **Dependencias:** `05-rocas-juego-real.md` (Implementado) y `06-leaderboard-real.md` (Implementado) — precedente de patrón (motor + hook + HUD/modal reutilizado, leaderboard real). Sin dependencia funcional de `01`/`02`/`03`/`04`.
 - **Fecha:** 2026-07-27
 - **Objetivo:** Portar el motor real de Tetris (`references/started-games/03-tetris`) a TypeScript, integrarlo al HUD/modal existentes en `/juegos/caida/jugar` (reemplazando el placeholder simulado del id `caida`, ya existente en `lib/data.ts`), y refactorizar el wiring de `page.tsx` de `isRocas` hardcodeado a un registro genérico `REAL_GAME_ENGINES` que incluya `rocas` y `caida`.
