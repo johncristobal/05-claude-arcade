@@ -7,6 +7,27 @@ import { GAMES } from "@/lib/data";
 import { saveScore as saveScoreRemote } from "@/lib/supabase/scores";
 import { useAuth } from "@/components/AuthProvider";
 import { useRocasGame } from "@/lib/games/rocas/useRocasGame";
+import {
+  useCaidaGame,
+  UseGameEngineResult,
+} from "@/lib/games/caida/useCaidaGame";
+
+// Usado cuando el juego activo no tiene motor real (placeholders fake) —
+// mantiene la forma de UseGameEngineResult para poder destructurar sin
+// condicionales.
+const NULL_ENGINE: UseGameEngineResult = {
+  canvasRef: () => {},
+  score: 0,
+  lives: 0,
+  level: 1,
+  state: "playing",
+  paused: false,
+  pause: () => {},
+  resume: () => {},
+  forceGameOver: () => {},
+  restart: () => {},
+  dispose: () => {},
+};
 
 export default function GamePlayerPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,25 +35,34 @@ export default function GamePlayerPage() {
   const { user } = useAuth();
 
   const game = GAMES.find((g) => g.id === id);
-  const isRocas = game?.id === "rocas";
 
-  // Se destructura de inmediato: leer `rocas.campo` repetidas veces en el
+  const rocas = useRocasGame();
+  const caida = useCaidaGame();
+
+  const REAL_GAME_ENGINES: Record<string, UseGameEngineResult> = {
+    rocas,
+    caida,
+  };
+  const engine = game ? REAL_GAME_ENGINES[game.id] : undefined;
+  const isReal = !!engine;
+
+  // Se destructura de inmediato: leer `engine.campo` repetidas veces en el
   // render hace que el linter de React Compiler trate todo el objeto como
   // si contuviera una ref (por `canvasRef`) y bloquee la lectura de los
   // demás campos durante el render. Destructurar una vez evita eso.
   const {
-    canvasRef: rocasCanvasRef,
-    score: rocasScore,
-    lives: rocasLives,
-    level: rocasLevel,
-    state: rocasState,
-    paused: rocasPaused,
-    pause: rocasPause,
-    resume: rocasResume,
-    forceGameOver: rocasForceGameOver,
-    restart: rocasRestart,
-    dispose: rocasDispose,
-  } = useRocasGame();
+    canvasRef: engineCanvasRef,
+    score: engineScore,
+    lives: engineLives,
+    level: engineLevel,
+    state: engineState,
+    paused: enginePaused,
+    pause: enginePause,
+    resume: engineResume,
+    forceGameOver: engineForceGameOver,
+    restart: engineRestart,
+    dispose: engineDispose,
+  } = engine ?? NULL_ENGINE;
 
   const [fakeScore, setFakeScore] = useState(0);
   const [fakeLives, setFakeLives] = useState(3);
@@ -42,48 +72,48 @@ export default function GamePlayerPage() {
   const [saved, setSaved] = useState(false);
   const name = nameOverride ?? (user ? user.name : "INVITADO");
 
-  const score = isRocas ? rocasScore : fakeScore;
-  const lives = isRocas ? rocasLives : fakeLives;
-  const paused = isRocas ? rocasPaused : fakePaused;
-  const level = isRocas ? rocasLevel : Math.floor(fakeScore / 2500) + 1;
-  const gameOver = isRocas ? rocasState === "gameover" : over;
+  const score = isReal ? engineScore : fakeScore;
+  const lives = isReal ? engineLives : fakeLives;
+  const paused = isReal ? enginePaused : fakePaused;
+  const level = isReal ? engineLevel : Math.floor(fakeScore / 2500) + 1;
+  const gameOver = isReal ? engineState === "gameover" : over;
 
   useEffect(() => {
-    if (!game || over || fakePaused || isRocas) return;
+    if (!game || over || fakePaused || isReal) return;
     const t = setInterval(
       () => setFakeScore((s) => s + Math.floor(10 + Math.random() * 90)),
       220,
     );
     return () => clearInterval(t);
-  }, [game, over, fakePaused, isRocas]);
+  }, [game, over, fakePaused, isReal]);
 
   if (!game) notFound();
 
   const togglePause = () => {
-    if (isRocas) {
-      if (rocasPaused) rocasResume();
-      else rocasPause();
+    if (isReal) {
+      if (enginePaused) engineResume();
+      else enginePause();
     } else {
       setFakePaused((p) => !p);
     }
   };
 
   const endGame = () => {
-    if (isRocas) rocasForceGameOver();
+    if (isReal) engineForceGameOver();
     else setOver(true);
   };
 
   const exit = () => {
-    if (isRocas && rocasState === "playing" && !rocasPaused) {
+    if (isReal && engineState === "playing" && !enginePaused) {
       if (!window.confirm("¿Salir ahora? Perderás la partida en curso."))
         return;
-      rocasDispose();
+      engineDispose();
     }
     router.push(`/juegos/${game.id}`);
   };
 
   const restart = () => {
-    if (isRocas) rocasRestart();
+    if (isReal) engineRestart();
     else {
       setFakeScore(0);
       setFakeLives(3);
@@ -138,9 +168,9 @@ export default function GamePlayerPage() {
 
       <div className="crt">
         <div className="crt-screen">
-          {isRocas ? (
+          {isReal ? (
             <canvas
-              ref={rocasCanvasRef}
+              ref={engineCanvasRef}
               width={800}
               height={600}
               style={{ width: "100%", height: "100%", display: "block" }}
