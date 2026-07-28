@@ -11,6 +11,7 @@ import {
   useCaidaGame,
   UseGameEngineResult,
 } from "@/lib/games/caida/useCaidaGame";
+import { useBloqueBusterGame } from "@/lib/games/bloque-buster/useBloqueBusterGame";
 
 // Usado cuando el juego activo no tiene motor real (placeholders fake) —
 // mantiene la forma de UseGameEngineResult para poder destructurar sin
@@ -38,10 +39,12 @@ export default function GamePlayerPage() {
 
   const rocas = useRocasGame();
   const caida = useCaidaGame();
+  const bloqueBuster = useBloqueBusterGame();
 
   const REAL_GAME_ENGINES: Record<string, UseGameEngineResult> = {
     rocas,
     caida,
+    "bloque-buster": bloqueBuster,
   };
   const engine = game ? REAL_GAME_ENGINES[game.id] : undefined;
   const isReal = !!engine;
