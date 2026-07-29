@@ -6,9 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Arcade Vault — online arcade platform, play games and compete for high scores. Currently a fresh `create-next-app` scaffold (App Router, TypeScript, Tailwind v4); no game/arcade features implemented yet.
+Arcade Vault — online arcade platform (Spanish UI, retro CRT/neon aesthetic): browse a game library, play games in a canvas player, save scores to a real Supabase leaderboard, see who is online.
 
-This project follows Spec Driven Design via the `/spec` and `/spec-impl` skills from [Klerith/fernando-skills](https://github.com/Klerith/fernando-skills) (`npx skills@latest add Klerith/fernando-skills`). Check for `/spec` docs before implementing new features.
+8 games in the catalog (`lib/data.ts`), 4 with a real playable engine (`rocas`, `caida`, `bloque-buster`, `serpentina`) and 4 visual placeholders (`gloton`, `invasores`, `ranaria`, `duelo-pixel`). `JUEGOS.md` is the up-to-date catalog: per-game mechanics, controls, scoring, origin, and DB state — read it before touching anything game-related.
+
+This project follows Spec Driven Design via the `/spec` and `/spec-impl` skills from [Klerith/fernando-skills](https://github.com/Klerith/fernando-skills) (`npx skills@latest add Klerith/fernando-skills`). Every feature so far has a spec in `specs/` (01–09). Check `specs/` before implementing new features, and add a new spec rather than coding straight into `app/`.
 
 ## Commands
 
@@ -17,22 +19,78 @@ This project follows Spec Driven Design via the `/spec` and `/spec-impl` skills 
 - `npm run start` — run production build
 - `npm run lint` — ESLint (flat config, `eslint-config-next` core-web-vitals + typescript)
 
-No test runner is configured yet.
+No test runner is configured. Verification is manual: dev server + Playwright MCP (browser navigation/screenshots) and Supabase MCP for DB checks.
 
 ## Critical: this is not the Next.js you know
 
-`next` is pinned to `16.2.10`, ahead of training data, with real breaking changes. **Before writing any Next.js code, read the matching guide in `node_modules/next/dist/docs/` first** (`01-app/` for App Router, `03-architecture/` for internals). Known deprecations so far:
+`next` is pinned to `16.2.10`, ahead of training data, with real breaking changes. **Before writing any Next.js code, read the matching guide in `node_modules/next/dist/docs/` first** (`01-app/` for App Router, `03-architecture/` for internals). Known deltas so far:
 
 - **Middleware is renamed Proxy.** `middleware.ts` is gone — use a root `proxy.ts` exporting `proxy()` (or default export). See `node_modules/next/dist/docs/01-app/01-getting-started/16-proxy.md`. Don't reach for `middleware.ts` from muscle memory.
+- **Typed route props are global.** Server pages type params with the global `PageProps<"/juegos/[id]">` helper (see `app/juegos/[id]/page.tsx`), not a hand-written `{ params }` interface. `params` is a Promise — `await` it.
+- **React 19.2 + React Compiler lint rules are strict.** In `app/juegos/[id]/jugar/page.tsx`, the engine object is destructured once because repeatedly reading `engine.field` during render makes the compiler linter treat the whole object as ref-carrying (it holds `canvasRef`) and block the reads. Keep that pattern.
 
 Assume other APIs/conventions may have shifted too — verify against the docs directory rather than trusting prior knowledge.
 
 ## Architecture
 
-- App Router only (`app/` directory) — `app/layout.tsx` is the root layout (Geist Sans/Mono fonts via `next/font/google`, wired into Tailwind via CSS variables in `app/globals.css`); `app/page.tsx` is the default CNA landing page, not yet replaced.
-- Tailwind v4 via `@tailwindcss/postcss`, configured in `app/globals.css` using `@theme inline` (no `tailwind.config.js` — v4 is CSS-first).
+### Routing & rendering
+
+App Router only. Routes: `/` (home, `app/page.tsx`), `/biblioteca`, `/juegos/[id]` (detail, **server component**, awaits Supabase), `/juegos/[id]/jugar` (player), `/salon-de-fama`, `/en-vivo`, `/acerca-de`, `/iniciar-sesion`, and `POST /api/contact`. Everything except the game-detail page and the API route is a client component.
+
+`app/layout.tsx` is the root layout: three Google fonts (`Press_Start_2P` → `--font-pixel`, `JetBrains_Mono`, `Courier_Prime`), background/noise layers, `AuthProvider`, `Nav`, footer.
+
+### Styling
+
+Tailwind v4 via `@tailwindcss/postcss`, CSS-first (no `tailwind.config.js`). `app/globals.css` (~1300 lines) holds the whole design system: CSS variables (`--cyan`, `--magenta`, `--yellow`, `--green`, `--bg*`, `--ink*`) plus hand-written component classes (`.crt`, `.crt-screen`, `.player-hud`, `.hud-stat`, `.cover-*`, `.btn`, `.modal`, `.fade-in`). Tailwind utilities are used sparingly — most UI reuses these classes. `@theme inline` only bridges a few tokens into Tailwind.
+
+### Data
+
+- `lib/data.ts` — static catalog `GAMES`, `CATS`, `PLAYERS`. **`best` and `plays` in `GAMES` are decorative** mockup values; real numbers come from Supabase.
+- `lib/types.ts` — `Game`, `ScoreRow`, `User`, `SavedScore`, `PresenceGuest`, `LeaderboardRow`, `GameStats`.
+- `lib/supabase/client.ts` — thin `createClient()` over `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- `lib/supabase/scores.ts` — the only DB layer: `getLeaderboard`, `getGameStats`, `getBestByName`, `saveScore` (clamps score ≥ 0, name trimmed/uppercased to 10 chars). Don't query `scores` directly from components.
+- Supabase project `uworqrfrwyjoglantqhi`. Tables: `games` (8 rows, one per catalog id) and `scores` (`game_id`, `name`, `score`, `created_at`). RLS on both with public read policies.
+- `/en-vivo` uses Supabase Realtime presence (channel `en-vivo`, anonymous auth, `INVITADO_NNNN` names) — no table involved.
+- Auth is fake: `components/AuthProvider.tsx` stores `{ name }` in `localStorage` under `av_user`, exposed via `useAuth()`. No real accounts.
+
+### Games
+
+Each real game lives in `lib/games/<id>/`: a framework-free `engine.ts` (pure canvas + rAF loop) plus `use<Game>Game.ts`, a React hook that owns the canvas ref and mirrors engine state. All hooks return the same `UseGameEngineResult` contract (`canvasRef`, `score`, `lives`, `level`, `state`, `paused`, `pause`, `resume`, `forceGameOver`, `restart`, `dispose`) — canonical definition in `lib/games/caida/useCaidaGame.ts`.
+
+To see the implemented games, you can check the next: `JUEGOS.md`
+
+`app/juegos/[id]/jugar/page.tsx` is the single player shell: registry `REAL_GAME_ENGINES` maps id → hook result, `NULL_ENGINE` keeps placeholders on the same shape. Shared HUD (score/lives/level), PAUSA/FIN/SALIR buttons, pause overlay, game-over modal, and `saveScore()`. Canvas is always 800×600 native, CSS-scaled inside `.crt-screen`. No audio, no touch controls.
+
+**To add a game:** run `/add-game <name>` (generates the spec), then `/spec-impl NN-<slug>`. Sources live in `references/started-games/`; assets in `references/source-assets/`. The skill refuses source paths outside `references/started-games/`.
+
+### Misc
+
 - Path alias `@/*` maps to project root (`tsconfig.json`).
+- `/api/contact` sends mail through Resend (`RESEND_API_KEY`, `CONTACT_EMAIL`), validates name/email/message, returns `{ ok }` with 400/500 on failure.
+- Env vars: see `.env.example`. `.env*` is gitignored except the example.
+- `references/templates/` holds the original static HTML/JSX mockup the UI was ported from — the visual source of truth for spec 01.
+- Notes/docs at repo root are personal course notes, not specs: `801_arcadenotes.md`, `101_skills.md`, `901_hooks_mcp.md`, `111_agentes.md`. `JUEGOS.md` is the real game catalog.
 
-## Skills
+## Tooling
 
-Use /frontend-design to design user interface
+### Skills
+
+- `/frontend-design` — use to design user interface.
+- `/spec`, `/spec-impl` — spec-driven flow (`specs/.spec-config.yml`: `AutoCreateBranch: true`, so `/spec-impl` creates `spec-NN-slug` itself).
+- `/add-game` — generates a game-port spec (never writes code).
+
+### MCP
+
+- `supabase` (project-scoped, `.mcp.json`) — schema, SQL, logs, advisors, migrations. **Dev project only, never prod.**
+- `playwright` — browser automation for visual verification.
+
+### Hooks
+
+- PostToolUse on `Write|Edit` → `.claude/hooks/format-on-save.sh`: Prettier on `.md`, Prettier + `eslint --fix` on `.tsx`/`.jsx`.
+- Stop / Notification (local settings) → play a sound.
+
+Prettier config: `semi: true`, `singleQuote: false`, `trailingComma: "all"`; ignores `.next/`, `out/`, `build/`, `next-env.d.ts`, `references/`.
+
+## Git workflow
+
+`main` is protected — no direct pushes. Work on a branch (`spec-NN-slug` for spec work), then open a PR and merge. Recent history follows one branch per spec.
