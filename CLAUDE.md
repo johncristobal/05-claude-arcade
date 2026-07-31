@@ -79,6 +79,14 @@ To see the implemented games, you can check the next: `JUEGOS.md`
 - `/spec`, `/spec-impl` — spec-driven flow (`specs/.spec-config.yml`: `AutoCreateBranch: true`, so `/spec-impl` creates `spec-NN-slug` itself).
 - `/add-game` — generates a game-port spec (never writes code).
 
+### Agents
+
+Project subagents live in `.claude/agents/`.
+
+- `game-planner` (`.claude/agents/game-planner.md`) — decides **which game to add next**. Invoke explicitly ("usa game-planner"); it is not auto-triggered. Tools limited to `Read, Grep, Glob, Write, Edit`. It never writes code and never writes specs — its only writable file is `.claude/agents/game-planner/memoria.md`, a running table (`Fecha | Juego | Id destino | Estado | Veredicto`, states `implementado` · `propuesto` · `considerado` · `descartado`) so it doesn't repropose burned candidates. It reads `memoria.md` → `JUEGOS.md` → `lib/data.ts` → `specs/` → `references/` → `CLAUDE.md`, scores candidates on technical fit against `UseGameEngineResult` + the 800×600 canvas, source availability, catalog variety, effort, and whether the target id reuses a placeholder (no Supabase migration) or is new (needs a `games` row + `GAMES` entry). Output is a fixed-format recommendation ending in a `/add-game <juego>` handoff.
+
+Chain: **game-planner decides** → `/add-game` writes the spec → `/spec-impl` implements it.
+
 ### MCP
 
 - `supabase` (project-scoped, `.mcp.json`) — schema, SQL, logs, advisors, migrations. **Dev project only, never prod.**
