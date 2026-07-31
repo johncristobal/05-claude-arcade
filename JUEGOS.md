@@ -81,6 +81,41 @@ Para portar cualquiera: `/add-game <juego>` genera el spec, después `/spec-impl
 
 ---
 
+## Pipeline de candidatos (game-planner)
+
+Tanda de 20 propuestas del subagente `game-planner`, generadas 2026-07-31 en rondas secuenciales. **Ninguna aceptada, descartada ni implementada** — están en estado `propuesto` en `.claude/agents/game-planner/memoria.md` (fuente completa, con el razonamiento de cada ronda). 4 reutilizan un placeholder existente (sin migración); 16 son id nuevo (requieren fila en `games` + entrada en `GAMES` + clase `cover-*`).
+
+| #   | Juego                        | Id propuesto  | Categoría | Tipo        | Controles                              |
+| --- | ---------------------------- | ------------- | --------- | ----------- | -------------------------------------- |
+| 1   | Pong                         | `duelo-pixel` | VERSUS    | placeholder | `↑` `↓` paleta                         |
+| 2   | Space Invaders               | `invasores`   | SHOOTER   | placeholder | `←` `→` mover, `Espacio` disparar      |
+| 3   | Frogger                      | `ranaria`     | ARCADE    | placeholder | flechas                                |
+| 4   | Pac-Man                      | `gloton`      | ARCADE    | placeholder | flechas                                |
+| 5   | 2048                         | `fusion`      | PUZZLE    | id nuevo    | flechas                                |
+| 6   | Tron (motos de luz)          | `estela`      | VERSUS    | id nuevo    | flechas (+ WASD si 2P local)           |
+| 7   | Missile Command              | `impacto`     | SHOOTER   | id nuevo    | mouse                                  |
+| 8   | Simón (secuencia)            | `secuencia`   | PUZZLE    | id nuevo    | mouse + fallback flechas               |
+| 9   | Boxeo                        | `nocaut`      | VERSUS    | id nuevo    | teclado (golpe alto/bajo, bloqueo)     |
+| 10  | Memorice (parejas)           | `parejas`     | PUZZLE    | id nuevo    | mouse                                  |
+| 11  | Galería (caza de patos)      | `galeria`     | SHOOTER   | id nuevo    | mouse                                  |
+| 12  | Conecta 4                    | `conecta4`    | VERSUS    | id nuevo    | mouse + fallback flechas               |
+| 13  | Whack-a-mole (Topos)         | `topos`       | ARCADE    | id nuevo    | mouse                                  |
+| 14  | Buscaminas                   | `minas`       | PUZZLE    | id nuevo    | mouse (clic izq. revela, der. bandera) |
+| 15  | Flappy Bird (estilo)         | `vuelo`       | ARCADE    | id nuevo    | `Espacio` o clic                       |
+| 16  | Tres en raya (Gato)          | `gato`        | VERSUS    | id nuevo    | mouse + fallback flechas               |
+| 17  | Ahorcado                     | `verdugo`     | PUZZLE    | id nuevo    | teclado A-Z                            |
+| 18  | Mastermind (código secreto)  | `codigo`      | PUZZLE    | id nuevo    | mouse + fallback teclado 1–6           |
+| 19  | Nim (juego de fichas)        | `montones`    | VERSUS    | id nuevo    | mouse + fallback flechas               |
+| 20  | Lights Out (Apaga las luces) | `apagon`      | PUZZLE    | id nuevo    | mouse                                  |
+
+Catálogo proyectado si se implementaran las 20: ARCADE 6, PUZZLE 8, SHOOTER 4, VERSUS 6 (24 juegos totales).
+
+Cola de respaldo en `considerado` (no elegidos, por si se necesita reemplazar alguno de los 20): Solitario (Klondike), Reversi, Buscapalabras, Match-3, Combate de tanques, Q\*bert, Centipede, Damas.
+
+Antes de pedir una ronda 21, el propio agente recomienda revisar/aceptar/implementar algunos de estos 20 — empezando por los de menor esfuerzo (`verdugo`, `codigo`, `montones`, `apagon`, `vuelo`) y por los cuatro placeholders sin migración.
+
+---
+
 ## Contrato compartido
 
 Todo juego real expone el mismo hook (`UseGameEngineResult`) y se registra en `REAL_GAME_ENGINES` dentro de `app/juegos/[id]/jugar/page.tsx`:

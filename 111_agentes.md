@@ -24,4 +24,5 @@ Patron orquestador - trabajador
 Agente principal (orquesta)
 Subagentes - trabajador con su propio contexto
 
-### 
+### crear agente
+Tal cual le decimos a claude - crea un agente con abc
