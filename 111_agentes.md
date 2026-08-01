@@ -24,4 +24,11 @@ Patron orquestador - trabajador
 Agente principal (orquesta)
 Subagentes - trabajador con su propio contexto
 
-### 
+### crear agente
+Tal cual le decimos a claude - crea un agente con abc
+
+necesito que me ayudaes a crear un agente nuevo que se llame @skin-designer: revisa que todo el juego tenga al menos 3 skins, neon, retro y clasico (default) 
+El objetivo del agente es ayudarme a configurar los temas mencionados para que tdos los jugos cumplan con estos skins
+
+aplicamos agent
+necesito que creemos skins para el juego de arkanoid y serpiente. por favlor lanza dos agentes del @.claude/agents/skin-designer/, uno para cada juego   

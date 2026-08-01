@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BloqueBusterEngine, EngineSnapshot, EngineState } from "./engine";
+import { DEFAULT_SKIN, SkinId } from "../skins";
 
 export interface UseGameEngineResult {
   // Callback ref (no RefObject crudo): mismo motivo que useRocasGame/
@@ -22,8 +23,15 @@ export interface UseGameEngineResult {
 
 const GAME_KEY_CODES = ["ArrowLeft", "ArrowRight"];
 
-export function useBloqueBusterGame(): UseGameEngineResult {
+// `skin` es reactivo (no solo "valor inicial"): el motor expone setSkin() y
+// este hook lo llama en un efecto cuando cambia, sin forzar un remount del
+// <canvas> (la creación del BloqueBusterEngine solo pasa por canvasRef) —
+// mismo patrón que useRocasGame.
+export function useBloqueBusterGame(
+  skin: SkinId = DEFAULT_SKIN,
+): UseGameEngineResult {
   const engineRef = useRef<BloqueBusterEngine | null>(null);
+  const skinRef = useRef<SkinId>(skin);
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
   const pausedRef = useRef(false);
@@ -60,7 +68,7 @@ export function useBloqueBusterGame(): UseGameEngineResult {
       teardown();
       if (!node) return;
 
-      const engine = new BloqueBusterEngine(node);
+      const engine = new BloqueBusterEngine(node, skinRef.current);
       engineRef.current = engine;
       lastSnapshotRef.current = engine.getSnapshot();
       stateRef.current = lastSnapshotRef.current.state;
@@ -124,6 +132,14 @@ export function useBloqueBusterGame(): UseGameEngineResult {
     },
     [teardown],
   );
+
+  // Cambia la paleta activa en caliente cuando el usuario elige otro skin —
+  // no recrea el canvas (evita perder la partida en curso). skinRef solo se
+  // lee al montar el motor (dentro de canvasRef), nunca durante el render.
+  useEffect(() => {
+    skinRef.current = skin;
+    engineRef.current?.setSkin(skin);
+  }, [skin]);
 
   const pause = useCallback(() => {
     pausedRef.current = true;

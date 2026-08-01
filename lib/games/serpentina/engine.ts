@@ -3,8 +3,50 @@
 // fruits.png. Ver spec 09 para el detalle de las decisiones.
 
 import { FRUITS_IMAGE_SRC, FRUIT_KEYS, FRUIT_SPRITES } from "./spriteAtlas";
+import { DEFAULT_SKIN, SkinId } from "../skins";
 
 export type EngineState = "playing" | "dead" | "gameover";
+
+// ── Paletas por skin ─────────────────────────────────────────────────────────
+// `clasico` reproduce el look original (fondo casi negro, cabeza/cuerpo verde
+// neón, fruta de respaldo roja mientras el sprite no cargó). El sprite de
+// fruta en sí (fruits.png) no cambia por skin — solo el resto del canvas.
+export interface SerpentinaPalette {
+  background: string;
+  grid: string;
+  snakeHead: string;
+  snakeBody: string;
+  fruitFallback: string;
+  glow: boolean;
+}
+
+export const SERPENTINA_PALETTES: Record<SkinId, SerpentinaPalette> = {
+  clasico: {
+    background: "#0a0a0a",
+    grid: "rgba(255,255,255,0.05)",
+    snakeHead: "#39ff14",
+    snakeBody: "#1fa825",
+    fruitFallback: "#ff2d55",
+    glow: false,
+  },
+  neon: {
+    background: "#050014",
+    grid: "rgba(0,245,255,0.08)",
+    snakeHead: "#f5ff00",
+    snakeBody: "#00f5ff",
+    fruitFallback: "#ff2bd6",
+    glow: true,
+  },
+  retro: {
+    // LCD monocromática estilo Nokia Snake: todo en tonos de verde fósforo.
+    background: "#0f1a0a",
+    grid: "rgba(140,255,120,0.07)",
+    snakeHead: "#c8ffb0",
+    snakeBody: "#4a9c3a",
+    fruitFallback: "#8fff6b",
+    glow: false,
+  },
+};
 
 export interface EngineSnapshot {
   score: number;
@@ -64,10 +106,15 @@ export class SerpentinaEngine {
   private fruitsImage: HTMLImageElement;
   private fruitsImageLoaded = false;
 
-  constructor(canvas: HTMLCanvasElement) {
+  private skin: SkinId;
+  private palette: SerpentinaPalette;
+
+  constructor(canvas: HTMLCanvasElement, skin: SkinId = DEFAULT_SKIN) {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("No se pudo obtener el contexto 2D del canvas");
     this.ctx = ctx;
+    this.skin = skin;
+    this.palette = SERPENTINA_PALETTES[skin];
 
     this.fruitsImage = new Image();
     this.fruitsImage.onload = () => {
@@ -76,6 +123,11 @@ export class SerpentinaEngine {
     this.fruitsImage.src = FRUITS_IMAGE_SRC;
 
     this.initGame();
+  }
+
+  setSkin(skin: SkinId): void {
+    this.skin = skin;
+    this.palette = SERPENTINA_PALETTES[skin];
   }
 
   private initGame() {
@@ -180,14 +232,15 @@ export class SerpentinaEngine {
 
   draw(): void {
     const ctx = this.ctx;
+    const palette = this.palette;
     const W = GRID_COLS * CELL_SIZE;
     const H = GRID_ROWS * CELL_SIZE;
 
-    ctx.fillStyle = "#0a0a0a";
+    ctx.fillStyle = palette.background;
     ctx.fillRect(0, 0, W, H);
 
     // Grilla
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 1;
     for (let c = 0; c <= GRID_COLS; c++) {
       ctx.beginPath();
@@ -203,8 +256,13 @@ export class SerpentinaEngine {
     }
 
     // Serpiente
+    ctx.save();
+    if (palette.glow) {
+      ctx.shadowColor = palette.snakeHead;
+      ctx.shadowBlur = 6;
+    }
     this.snake.forEach((seg, i) => {
-      ctx.fillStyle = i === 0 ? "#39ff14" : "#1fa825";
+      ctx.fillStyle = i === 0 ? palette.snakeHead : palette.snakeBody;
       ctx.fillRect(
         seg.x * CELL_SIZE + 1,
         seg.y * CELL_SIZE + 1,
@@ -212,6 +270,7 @@ export class SerpentinaEngine {
         CELL_SIZE - 2,
       );
     });
+    ctx.restore();
 
     // Fruta
     const fx = this.fruit.x * CELL_SIZE;
@@ -230,7 +289,7 @@ export class SerpentinaEngine {
         CELL_SIZE,
       );
     } else {
-      ctx.fillStyle = "#ff2d55";
+      ctx.fillStyle = palette.fruitFallback;
       ctx.fillRect(fx + 2, fy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
     }
   }

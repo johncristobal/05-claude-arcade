@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EngineSnapshot, EngineState, RocasEngine } from "./engine";
+import { DEFAULT_SKIN, SkinId } from "../skins";
 
 export interface UseRocasGameResult {
   // Callback ref (no RefObject crudo): evita que React Compiler marque
@@ -22,8 +23,12 @@ export interface UseRocasGameResult {
 
 const GAME_KEY_CODES = ["ArrowLeft", "ArrowRight", "ArrowUp", "Space"];
 
-export function useRocasGame(): UseRocasGameResult {
+// `skin` es reactivo (no solo "valor inicial"): el motor expone setSkin() y
+// este hook lo llama en un efecto cuando cambia, sin forzar un remount del
+// <canvas> (la creación del RocasEngine solo pasa por canvasRef).
+export function useRocasGame(skin: SkinId = DEFAULT_SKIN): UseRocasGameResult {
   const engineRef = useRef<RocasEngine | null>(null);
+  const skinRef = useRef<SkinId>(skin);
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
   const pausedRef = useRef(false);
@@ -60,7 +65,7 @@ export function useRocasGame(): UseRocasGameResult {
       teardown();
       if (!node) return;
 
-      const engine = new RocasEngine(node);
+      const engine = new RocasEngine(node, skinRef.current);
       engineRef.current = engine;
       lastSnapshotRef.current = engine.getSnapshot();
       stateRef.current = lastSnapshotRef.current.state;
@@ -118,6 +123,14 @@ export function useRocasGame(): UseRocasGameResult {
     },
     [teardown],
   );
+
+  // Cambia la paleta activa en caliente cuando el usuario elige otro skin —
+  // no recrea el canvas (evita perder la partida en curso). skinRef solo se
+  // lee al montar el motor (dentro de canvasRef), nunca durante el render.
+  useEffect(() => {
+    skinRef.current = skin;
+    engineRef.current?.setSkin(skin);
+  }, [skin]);
 
   const pause = useCallback(() => {
     pausedRef.current = true;

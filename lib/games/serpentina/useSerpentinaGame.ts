@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EngineSnapshot, EngineState, SerpentinaEngine } from "./engine";
+import { DEFAULT_SKIN, SkinId } from "../skins";
 
 export interface UseGameEngineResult {
   canvasRef: (node: HTMLCanvasElement | null) => void;
@@ -24,8 +25,15 @@ const ARROW_TO_DIRECTION = {
   ArrowRight: "right",
 } as const;
 
-export function useSerpentinaGame(): UseGameEngineResult {
+// `skin` es reactivo (no solo "valor inicial"): el motor expone setSkin() y
+// este hook lo llama en un efecto cuando cambia, sin forzar un remount del
+// <canvas> (la creación del SerpentinaEngine solo pasa por canvasRef) —
+// mismo patrón que useRocasGame.ts.
+export function useSerpentinaGame(
+  skin: SkinId = DEFAULT_SKIN,
+): UseGameEngineResult {
   const engineRef = useRef<SerpentinaEngine | null>(null);
+  const skinRef = useRef<SkinId>(skin);
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
   const pausedRef = useRef(false);
@@ -62,7 +70,7 @@ export function useSerpentinaGame(): UseGameEngineResult {
       teardown();
       if (!node) return;
 
-      const engine = new SerpentinaEngine(node);
+      const engine = new SerpentinaEngine(node, skinRef.current);
       engineRef.current = engine;
       lastSnapshotRef.current = engine.getSnapshot();
       stateRef.current = lastSnapshotRef.current.state;
@@ -117,6 +125,14 @@ export function useSerpentinaGame(): UseGameEngineResult {
     },
     [teardown],
   );
+
+  // Cambia la paleta activa en caliente cuando el usuario elige otro skin —
+  // no recrea el canvas (evita perder la partida en curso). skinRef solo se
+  // lee al montar el motor (dentro de canvasRef), nunca durante el render.
+  useEffect(() => {
+    skinRef.current = skin;
+    engineRef.current?.setSkin(skin);
+  }, [skin]);
 
   const pause = useCallback(() => {
     pausedRef.current = true;
