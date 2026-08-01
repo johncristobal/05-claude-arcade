@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { GAMES } from "@/lib/data";
 import { saveScore as saveScoreRemote } from "@/lib/supabase/scores";
 import { useAuth } from "@/components/AuthProvider";
+import { SKIN_IDS, SKIN_LABELS, useSkinPreference } from "@/lib/games/skins";
 import { useRocasGame } from "@/lib/games/rocas/useRocasGame";
 import {
   useCaidaGame,
@@ -38,10 +39,11 @@ export default function GamePlayerPage() {
 
   const game = GAMES.find((g) => g.id === id);
 
-  const rocas = useRocasGame();
+  const [skin, setSkin] = useSkinPreference();
+  const rocas = useRocasGame(skin);
   const caida = useCaidaGame();
-  const bloqueBuster = useBloqueBusterGame();
-  const serpentina = useSerpentinaGame();
+  const bloqueBuster = useBloqueBusterGame(skin);
+  const serpentina = useSerpentinaGame(skin);
 
   const REAL_GAME_ENGINES: Record<string, UseGameEngineResult> = {
     rocas,
@@ -160,6 +162,22 @@ export default function GamePlayerPage() {
           </div>
         </div>
         <div className="hud-actions">
+          {(game.id === "rocas" ||
+            game.id === "serpentina" ||
+            game.id === "bloque-buster") && (
+            <div className="skin-selector">
+              <span className="l">SKIN</span>
+              {SKIN_IDS.map((id) => (
+                <button
+                  key={id}
+                  className={`skin-btn${skin === id ? " active" : ""}`}
+                  onClick={() => setSkin(id)}
+                >
+                  {SKIN_LABELS[id]}
+                </button>
+              ))}
+            </div>
+          )}
           <button className="btn yellow" onClick={togglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>

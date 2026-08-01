@@ -3,7 +3,58 @@
 // pasan a ser campos de instancia de RocasEngine para permitir montar/desmontar
 // sin contaminar el módulo.
 
+import { DEFAULT_SKIN, SkinId } from "../skins";
+
 export type EngineState = "playing" | "dead" | "gameover";
+
+// ── Paletas por skin ─────────────────────────────────────────────────────────
+// `clasico` reproduce el look original (vectorial blanco sobre negro). Cada
+// campo de color se usa en el draw() de la clase correspondiente. `particle`
+// es el triplete RGB (sin "rgb()") que se combina con el alpha de vida de
+// cada partícula.
+export interface RocasPalette {
+  background: string;
+  ship: string;
+  shipThrust: string;
+  asteroid: string;
+  bullet: string;
+  particle: string;
+  powerup: string;
+  glow: boolean;
+}
+
+export const ROCAS_PALETTES: Record<SkinId, RocasPalette> = {
+  clasico: {
+    background: "#000",
+    ship: "#fff",
+    shipThrust: "255, 130, 0",
+    asteroid: "#fff",
+    bullet: "#fff",
+    particle: "255, 255, 255",
+    powerup: "#0ff",
+    glow: false,
+  },
+  neon: {
+    background: "#050014",
+    ship: "#ff2bd6",
+    shipThrust: "0, 245, 255",
+    asteroid: "#00f5ff",
+    bullet: "#f5ff00",
+    particle: "0, 245, 255",
+    powerup: "#f5ff00",
+    glow: true,
+  },
+  retro: {
+    background: "#0a0600",
+    ship: "#ffb000",
+    shipThrust: "255, 176, 0",
+    asteroid: "#ffb000",
+    bullet: "#ffb000",
+    particle: "255, 176, 0",
+    powerup: "#ffb000",
+    glow: false,
+  },
+};
 
 export interface EngineSnapshot {
   score: number;
@@ -55,11 +106,17 @@ class Bullet {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "#fff";
+  draw(ctx: CanvasRenderingContext2D, palette: RocasPalette) {
+    ctx.save();
+    ctx.fillStyle = palette.bullet;
+    if (palette.glow) {
+      ctx.shadowColor = palette.bullet;
+      ctx.shadowBlur = 8;
+    }
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
   }
 }
 
@@ -116,13 +173,17 @@ class Asteroid {
     ];
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, palette: RocasPalette) {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rot);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = palette.asteroid;
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
+    if (palette.glow) {
+      ctx.shadowColor = palette.asteroid;
+      ctx.shadowBlur = 6;
+    }
     ctx.beginPath();
     ctx.moveTo(this.verts[0][0], this.verts[0][1]);
     for (let i = 1; i < this.verts.length; i++)
@@ -159,18 +220,22 @@ class PowerUp {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, palette: RocasPalette) {
     if (this.ttl < 2 && Math.floor(this.ttl * 8) % 2 === 0) return;
     const pulse = 0.85 + Math.sin(performance.now() / 150) * 0.15;
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.PI / 4);
-    ctx.strokeStyle = "#0ff";
+    ctx.strokeStyle = palette.powerup;
     ctx.lineWidth = 2;
+    if (palette.glow) {
+      ctx.shadowColor = palette.powerup;
+      ctx.shadowBlur = 10;
+    }
     const r = this.radius * pulse;
     ctx.strokeRect(-r, -r, r * 2, r * 2);
     ctx.restore();
-    ctx.fillStyle = "#0ff";
+    ctx.fillStyle = palette.powerup;
     ctx.font = "bold 12px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -250,7 +315,7 @@ class Ship {
     return [new Bullet(ox, oy, this.angle)];
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, palette: RocasPalette) {
     if (this.dead) return;
     // Parpadeo durante invencibilidad de reaparición
     if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0)
@@ -259,9 +324,13 @@ class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = palette.ship;
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
+    if (palette.glow) {
+      ctx.shadowColor = palette.ship;
+      ctx.shadowBlur = 8;
+    }
 
     // Silueta clásica: triángulo con muesca trasera
     ctx.beginPath();
@@ -278,7 +347,7 @@ class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+      ctx.strokeStyle = `rgba(${palette.shipThrust}, 0.85)`;
       ctx.stroke();
     }
 
@@ -314,9 +383,9 @@ class Particle {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, palette: RocasPalette) {
     const alpha = this.ttl / this.life;
-    ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+    ctx.strokeStyle = `rgba(${palette.particle},${alpha.toFixed(2)})`;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);
@@ -345,13 +414,22 @@ export class RocasEngine {
   private deadTimer = 0;
   private powerUpSpawned = false;
   private killsSinceSpawn = 0;
+  private skin: SkinId;
+  private palette: RocasPalette;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, skin: SkinId = DEFAULT_SKIN) {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("No se pudo obtener el contexto 2D del canvas");
     this.ctx = ctx;
+    this.skin = skin;
+    this.palette = ROCAS_PALETTES[skin];
     this.ship = new Ship();
     this.initGame();
+  }
+
+  setSkin(skin: SkinId): void {
+    this.skin = skin;
+    this.palette = ROCAS_PALETTES[skin];
   }
 
   // ── Input público (el propio hook engancha keydown/keyup en window) ────────
@@ -508,14 +586,15 @@ export class RocasEngine {
 
   draw(): void {
     const ctx = this.ctx;
-    ctx.fillStyle = "#000";
+    const palette = this.palette;
+    ctx.fillStyle = palette.background;
     ctx.fillRect(0, 0, W, H);
 
-    this.particles.forEach((p) => p.draw(ctx));
-    this.asteroids.forEach((a) => a.draw(ctx));
-    this.powerUps.forEach((p) => p.draw(ctx));
-    this.bullets.forEach((b) => b.draw(ctx));
-    this.ship.draw(ctx);
+    this.particles.forEach((p) => p.draw(ctx, palette));
+    this.asteroids.forEach((a) => a.draw(ctx, palette));
+    this.powerUps.forEach((p) => p.draw(ctx, palette));
+    this.bullets.forEach((b) => b.draw(ctx, palette));
+    this.ship.draw(ctx, palette);
 
     // Sin drawHUD ni drawOverlay: HUD real y modal de fin son del sitio (ver spec).
   }

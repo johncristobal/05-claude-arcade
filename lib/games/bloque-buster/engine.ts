@@ -4,7 +4,80 @@
 // nivel N" y las teclas P/Escape del original no se portan — la pausa es
 // solo del sitio (HUD), ver spec.
 
+import { DEFAULT_SKIN, SkinId } from "../skins";
+
 export type EngineState = "playing" | "dead" | "gameover";
+
+// ── Paletas por skin ─────────────────────────────────────────────────────────
+// Los layouts de nivel (LEVELS más abajo) siguen etiquetando cada bloque con
+// una "clave lógica" de color (los mismos 7 nombres del port original:
+// red/yellow/cyan/magenta/hotpink/green/gray) en vez de un color final — cada
+// skin remapea esas claves a los colores que realmente se dibujan. `clasico`
+// usa una identidad (clave === color CSS), reproduciendo el look original.
+export type BlockColorKey =
+  | "red"
+  | "yellow"
+  | "cyan"
+  | "magenta"
+  | "hotpink"
+  | "green"
+  | "gray";
+
+export interface BloqueBusterPalette {
+  background: string;
+  paddle: string;
+  ball: string;
+  blockColors: Record<BlockColorKey, string>;
+  glow: boolean;
+}
+
+export const BLOQUE_BUSTER_PALETTES: Record<SkinId, BloqueBusterPalette> = {
+  clasico: {
+    background: "#000",
+    paddle: "#fff",
+    ball: "#fff",
+    blockColors: {
+      red: "red",
+      yellow: "yellow",
+      cyan: "cyan",
+      magenta: "magenta",
+      hotpink: "hotpink",
+      green: "green",
+      gray: "gray",
+    },
+    glow: false,
+  },
+  neon: {
+    background: "#050014",
+    paddle: "#f5ff00",
+    ball: "#00f5ff",
+    blockColors: {
+      red: "#ff2bd6",
+      yellow: "#f5ff00",
+      cyan: "#00f5ff",
+      magenta: "#b026ff",
+      hotpink: "#ff006e",
+      green: "#00ff88",
+      gray: "#5ce1ff",
+    },
+    glow: true,
+  },
+  retro: {
+    background: "#0a0600",
+    paddle: "#ffb000",
+    ball: "#fff2cc",
+    blockColors: {
+      red: "#7a4d00",
+      yellow: "#ffcf66",
+      cyan: "#b37400",
+      magenta: "#ffb000",
+      hotpink: "#fff2cc",
+      green: "#8f5c00",
+      gray: "#4d3300",
+    },
+    glow: false,
+  },
+};
 
 export interface EngineSnapshot {
   score: number;
@@ -21,7 +94,14 @@ const BLOCK_COLS = 10;
 const BLOCK_ROWS = 6;
 const BLOCK_W = 64;
 const BLOCK_H = 24;
-const BLOCK_COLORS = ["red", "yellow", "cyan", "magenta", "hotpink", "green"];
+const BLOCK_COLORS: BlockColorKey[] = [
+  "red",
+  "yellow",
+  "cyan",
+  "magenta",
+  "hotpink",
+  "green",
+];
 const BLOCKS_ORIGIN_X = (W - BLOCK_COLS * BLOCK_W) / 2;
 const BLOCKS_ORIGIN_Y = 80;
 const BASE_BALL_VX = 200;
@@ -30,7 +110,7 @@ const BASE_BALL_VY = -300;
 interface LevelBlockSpec {
   col: number;
   row: number;
-  color: string;
+  color: BlockColorKey;
 }
 
 interface Level {
@@ -41,8 +121,22 @@ interface Level {
 // Puerto 1:1 de levels.js — layouts fijos l1..l5.
 const LEVELS: Level[] = (() => {
   const rowColors1 = BLOCK_COLORS;
-  const rowColors2 = ["gray", "cyan", "hotpink", "yellow", "magenta", "green"];
-  const rowColors4 = ["cyan", "magenta", "green", "yellow", "hotpink", "red"];
+  const rowColors2: BlockColorKey[] = [
+    "gray",
+    "cyan",
+    "hotpink",
+    "yellow",
+    "magenta",
+    "green",
+  ];
+  const rowColors4: BlockColorKey[] = [
+    "cyan",
+    "magenta",
+    "green",
+    "yellow",
+    "hotpink",
+    "red",
+  ];
 
   const l1: LevelBlockSpec[] = [];
   for (let row = 0; row < BLOCK_ROWS; row++)
@@ -107,7 +201,7 @@ interface Ball extends Rect {
 }
 
 interface Block extends Rect {
-  color: string;
+  color: BlockColorKey;
   alive: boolean;
 }
 
@@ -134,11 +228,21 @@ export class BloqueBusterEngine {
 
   private keys = { ArrowLeft: false, ArrowRight: false };
 
-  constructor(canvas: HTMLCanvasElement) {
+  private skin: SkinId;
+  private palette: BloqueBusterPalette;
+
+  constructor(canvas: HTMLCanvasElement, skin: SkinId = DEFAULT_SKIN) {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("No se pudo obtener el contexto 2D del canvas");
     this.ctx = ctx;
+    this.skin = skin;
+    this.palette = BLOQUE_BUSTER_PALETTES[skin];
     this.initGame();
+  }
+
+  setSkin(skin: SkinId): void {
+    this.skin = skin;
+    this.palette = BLOQUE_BUSTER_PALETTES[skin];
   }
 
   private initGame() {
@@ -264,18 +368,29 @@ export class BloqueBusterEngine {
 
   draw(): void {
     const ctx = this.ctx;
-    ctx.fillStyle = "#000";
+    const palette = this.palette;
+    ctx.save();
+    ctx.fillStyle = palette.background;
     ctx.fillRect(0, 0, W, H);
 
+    if (palette.glow) {
+      ctx.shadowBlur = 10;
+    }
     for (const block of this.blocks) {
       if (!block.alive) continue;
-      ctx.fillStyle = block.color;
+      ctx.fillStyle = palette.blockColors[block.color];
+      if (palette.glow) ctx.shadowColor = ctx.fillStyle;
       ctx.fillRect(block.x, block.y, block.w, block.h);
     }
 
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = palette.paddle;
+    if (palette.glow) ctx.shadowColor = palette.paddle;
     ctx.fillRect(this.paddle.x, this.paddle.y, this.paddle.w, this.paddle.h);
+
+    ctx.fillStyle = palette.ball;
+    if (palette.glow) ctx.shadowColor = palette.ball;
     ctx.fillRect(this.ball.x, this.ball.y, this.ball.w, this.ball.h);
+    ctx.restore();
 
     // Sin drawHUD ni drawOverlay: HUD real y modal de fin son del sitio.
   }
