@@ -38,3 +38,19 @@ export function dispatchKey(code: string, type: "keydown" | "keyup"): void {
 export function dpadDirectionToCode(direction: DpadDirection): string {
   return DIRECTION_TO_CODE[direction];
 }
+
+export const ROCAS_TOUCH_CONFIG: TouchControlsConfig = {
+  dpad: ["left", "right", "up"],
+  actions: [{ label: "DISPARAR", code: "Space" }],
+};
+
+export const CAIDA_TOUCH_CONFIG: TouchControlsConfig = {
+  dpad: ["left", "right", "down", "up"],
+  actions: [{ label: "CAER", code: "Space" }],
+  repeat: true,
+};
+
+export const SERPENTINA_TOUCH_CONFIG: TouchControlsConfig = {
+  dpad: ["up", "down", "left", "right"],
+  actions: [],
+};
