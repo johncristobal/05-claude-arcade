@@ -7,6 +7,14 @@ import { GAMES } from "@/lib/data";
 import { saveScore as saveScoreRemote } from "@/lib/supabase/scores";
 import { useAuth } from "@/components/AuthProvider";
 import { SKIN_IDS, SKIN_LABELS, useSkinPreference } from "@/lib/games/skins";
+import {
+  useIsTouchDevice,
+  ROCAS_TOUCH_CONFIG,
+  CAIDA_TOUCH_CONFIG,
+  SERPENTINA_TOUCH_CONFIG,
+  type TouchControlsConfig,
+} from "@/lib/games/touchInput";
+import { TouchControls } from "@/components/game/TouchControls";
 import { useRocasGame } from "@/lib/games/rocas/useRocasGame";
 import {
   useCaidaGame,
@@ -53,6 +61,14 @@ export default function GamePlayerPage() {
   };
   const engine = game ? REAL_GAME_ENGINES[game.id] : undefined;
   const isReal = !!engine;
+
+  const isTouch = useIsTouchDevice();
+  const TOUCH_CONFIGS: Record<string, TouchControlsConfig> = {
+    rocas: ROCAS_TOUCH_CONFIG,
+    caida: CAIDA_TOUCH_CONFIG,
+    serpentina: SERPENTINA_TOUCH_CONFIG,
+  };
+  const touchConfig = game ? TOUCH_CONFIGS[game.id] : undefined;
 
   // Se destructura de inmediato: leer `engine.campo` repetidas veces en el
   // render hace que el linter de React Compiler trate todo el objeto como
@@ -238,6 +254,8 @@ export default function GamePlayerPage() {
           <span>CARGA · 1MB</span>
         </div>
       </div>
+
+      {isTouch && touchConfig && <TouchControls config={touchConfig} />}
 
       {gameOver && (
         <div className="modal-bd">
