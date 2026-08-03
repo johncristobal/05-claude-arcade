@@ -32,3 +32,7 @@ El objetivo del agente es ayudarme a configurar los temas mencionados para que t
 
 aplicamos agent
 necesito que creemos skins para el juego de arkanoid y serpiente. por favlor lanza dos agentes del @.claude/agents/skin-designer/, uno para cada juego   
+
+### disp moviles
+lanzamos spec para crear una sollicion para dispositivos moviles
+Se busca colocar un pad en la parte de abajo del canvas
