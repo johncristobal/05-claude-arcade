@@ -1,19 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const TOUCH_QUERY = "(pointer: coarse)";
+
+function subscribeTouch(callback: () => void) {
+  const mql = window.matchMedia(TOUCH_QUERY);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+function getTouchSnapshot() {
+  return window.matchMedia(TOUCH_QUERY).matches;
+}
+
+function getServerSnapshot() {
+  return false;
+}
 
 export function useIsTouchDevice(): boolean {
-  const [isTouch, setIsTouch] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(pointer: coarse)");
-    setIsTouch(mql.matches);
-    const handleChange = (e: MediaQueryListEvent) => setIsTouch(e.matches);
-    mql.addEventListener("change", handleChange);
-    return () => mql.removeEventListener("change", handleChange);
-  }, []);
-
-  return isTouch;
+  return useSyncExternalStore(subscribeTouch, getTouchSnapshot, getServerSnapshot);
 }
 
 export type DpadDirection = "up" | "down" | "left" | "right";
