@@ -90,13 +90,26 @@ export function useBloqueBusterGame(
         if (pausedRef.current || stateRef.current === "gameover") return;
         engine.handleMouseMove(e.clientX, node.getBoundingClientRect());
       };
+      // Mismo escalado que el mouse (handleMouseMove ya traduce clientX vía
+      // getBoundingClientRect) — solo cambia la fuente de la coordenada.
+      const handleTouchMove = (e: TouchEvent) => {
+        if (pausedRef.current || stateRef.current === "gameover") return;
+        const touch = e.touches[0];
+        if (!touch) return;
+        e.preventDefault();
+        engine.handleMouseMove(touch.clientX, node.getBoundingClientRect());
+      };
       window.addEventListener("keydown", handleKeyDown);
       window.addEventListener("keyup", handleKeyUp);
       node.addEventListener("mousemove", handleMouseMove);
+      node.addEventListener("touchstart", handleTouchMove, { passive: false });
+      node.addEventListener("touchmove", handleTouchMove, { passive: false });
       teardownInputRef.current = () => {
         window.removeEventListener("keydown", handleKeyDown);
         window.removeEventListener("keyup", handleKeyUp);
         node.removeEventListener("mousemove", handleMouseMove);
+        node.removeEventListener("touchstart", handleTouchMove);
+        node.removeEventListener("touchmove", handleTouchMove);
       };
 
       function tick(ts: number) {
