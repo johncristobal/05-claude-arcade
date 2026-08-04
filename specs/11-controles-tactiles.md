@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** aprovado
+- **Estado:** implemented
 - **Dependencias:** `05-rocas-juego-real.md`, `07-caida-juego-real.md`, `08-bloque-buster-juego-real.md`, `09-serpentina-juego-real.md` (los 4, Implementado) — motores reales que reciben soporte táctil. Sin dependencia funcional de `10-sistema-skins.md` (coexisten, temas ortogonales).
 - **Fecha:** 2026-08-03
 - **Objetivo:** Agregar controles táctiles equivalentes a los de teclado/mouse a los 4 juegos reales (`rocas`, `caida`, `bloque-buster`, `serpentina`) para que sean jugables en un dispositivo con pantalla táctil, sin modificar el gameplay ni el layout existente más allá del CSS mínimo necesario (`touch-action`, viewport).

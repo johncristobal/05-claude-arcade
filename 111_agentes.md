@@ -35,4 +35,4 @@ necesito que creemos skins para el juego de arkanoid y serpiente. por favlor lan
 
 ### disp moviles
 lanzamos spec para crear una sollicion para dispositivos moviles
-Se busca colocar un pad en la parte de abajo del canvas
+Se busca colocar un pad en la parte de abajo del canvas solo para dispositivos moviles
