@@ -38,3 +38,10 @@ lanzamos spec para crear una sollicion para dispositivos moviles
 Se busca colocar un pad en la parte de abajo del canvas solo para dispositivos moviles
 
 ### cron jobs
+/schedule
+Definimos tarea a lanzar
+En este caso, que se lance el gamejam todos los dias a las 2 am
+OJO - esto se vincula a claude desktop, tienes que tener la app instalada, ahi se ve el cron
+- tamb ayuda a correrlo ahora y ver resultados
+
+con el mismo /schedule, puedes listar las tareas que tienes
