@@ -3,7 +3,74 @@
 // campos de instancia de CaidaEngine para permitir montar/desmontar sin
 // contaminar el módulo.
 
+import { DEFAULT_SKIN, SkinId } from "../skins";
+
 export type EngineState = "playing" | "dead" | "gameover";
+
+// ── Paletas por skin ─────────────────────────────────────────────────────────
+// `pieces` está indexado 0..7 y corresponde a los tipos de pieza 1..8
+// (I,O,T,S,Z,J,L,N) — mismo orden que el `COLORS` original. `clasico`
+// reproduce el look actual (colores pastel tipo Tetris moderno).
+export interface CaidaPalette {
+  background: string;
+  grid: string;
+  pieces: string[];
+  blockHighlight: string;
+  glow: boolean;
+}
+
+export const CAIDA_PALETTES: Record<SkinId, CaidaPalette> = {
+  clasico: {
+    background: "#000",
+    grid: "rgba(255,255,255,0.08)",
+    pieces: [
+      "#4dd0e1", // I - cyan
+      "#ffd54f", // O - yellow
+      "#ba68c8", // T - purple
+      "#81c784", // S - green
+      "#e57373", // Z - red
+      "#90caf9", // J - pale blue
+      "#ffb74d", // L - orange
+      "#9e9e9e", // N - tuerca (gris metálico)
+    ],
+    blockHighlight: "rgba(255,255,255,0.12)",
+    glow: false,
+  },
+  neon: {
+    background: "#050014",
+    grid: "rgba(0,245,255,0.08)",
+    pieces: [
+      "#00f5ff", // I - cian del sitio
+      "#f5ff00", // O - amarillo del sitio
+      "#b026ff", // T - violeta eléctrico
+      "#00ff88", // S - verde del sitio
+      "#ff006e", // Z - magenta del sitio
+      "#5ce1ff", // J - celeste eléctrico
+      "#ff7700", // L - naranja eléctrico
+      "#ff2bd6", // N - magenta claro (reemplaza el gris metálico)
+    ],
+    blockHighlight: "rgba(255,255,255,0.22)",
+    glow: true,
+  },
+  retro: {
+    // Paleta DMG de 4 tonos del Game Boy original — Tetris es indisociable
+    // de esa pantalla, a diferencia del ámbar VT100 de ROCAS/BLOQUE BUSTER.
+    background: "#0f380f",
+    grid: "rgba(155,188,15,0.10)",
+    pieces: [
+      "#9bbc0f", // I
+      "#8bac0f", // O
+      "#306230", // T
+      "#9bbc0f", // S
+      "#8bac0f", // Z
+      "#306230", // J
+      "#9bbc0f", // L
+      "#8bac0f", // N
+    ],
+    blockHighlight: "rgba(155,188,15,0.20)",
+    glow: false,
+  },
+};
 
 export interface EngineSnapshot {
   score: number;
@@ -22,20 +89,6 @@ const BLOCK = 30;
 const W = 800;
 const H = ROWS * BLOCK;
 const SIDEBAR_X = COLS * BLOCK;
-
-const GRID_LINE = "rgba(255,255,255,0.08)";
-
-const COLORS: (string | null)[] = [
-  null,
-  "#4dd0e1", // I - cyan
-  "#ffd54f", // O - yellow
-  "#ba68c8", // T - purple
-  "#81c784", // S - green
-  "#e57373", // Z - red
-  "#90caf9", // J - pale blue
-  "#ffb74d", // L - orange
-  "#9e9e9e", // N - tuerca (gris metálico)
-];
 
 const PIECES: (number[][] | null)[] = [
   null,
@@ -128,13 +181,25 @@ export class CaidaEngine {
   private dropInterval = 1000;
   private dropAccum = 0;
 
-  constructor(canvas: HTMLCanvasElement) {
+  private skin: SkinId;
+  private palette: CaidaPalette;
+
+  constructor(canvas: HTMLCanvasElement, skin: SkinId = DEFAULT_SKIN) {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("No se pudo obtener el contexto 2D del canvas");
     this.ctx = ctx;
+    this.skin = skin;
+    this.palette = CAIDA_PALETTES[skin];
     this.next = randomPiece();
     this.current = randomPiece();
     this.initGame();
+  }
+
+  // Solo reasigna la paleta activa — nunca reinicia el estado de la
+  // partida en curso (mismo contrato que RocasEngine.setSkin()).
+  setSkin(skin: SkinId): void {
+    this.skin = skin;
+    this.palette = CAIDA_PALETTES[skin];
   }
 
   private initGame() {
@@ -274,6 +339,11 @@ export class CaidaEngine {
     }
   }
 
+  // colorIndex 1..8 → this.palette.pieces[colorIndex - 1]; 0 = celda vacía.
+  private pieceColor(colorIndex: number): string {
+    return this.palette.pieces[colorIndex - 1];
+  }
+
   private drawBlock(
     context: CanvasRenderingContext2D,
     x: number,
@@ -283,13 +353,18 @@ export class CaidaEngine {
     alpha?: number,
   ) {
     if (!colorIndex) return;
-    const color = COLORS[colorIndex];
+    context.save();
     context.globalAlpha = alpha ?? 1;
-    context.fillStyle = color as string;
+    if (this.palette.glow) {
+      context.shadowColor = this.pieceColor(colorIndex);
+      context.shadowBlur = 6;
+    }
+    context.fillStyle = this.pieceColor(colorIndex);
     context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-    context.fillStyle = "rgba(255,255,255,0.12)";
+    context.shadowBlur = 0;
+    context.fillStyle = this.palette.blockHighlight;
     context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
-    context.globalAlpha = 1;
+    context.restore();
   }
 
   // Igual que drawBlock, pero (px, py) es el origen en píxeles absolutos
@@ -303,16 +378,22 @@ export class CaidaEngine {
     size: number,
   ) {
     if (!colorIndex) return;
-    const color = COLORS[colorIndex];
-    context.fillStyle = color as string;
+    context.save();
+    if (this.palette.glow) {
+      context.shadowColor = this.pieceColor(colorIndex);
+      context.shadowBlur = 6;
+    }
+    context.fillStyle = this.pieceColor(colorIndex);
     context.fillRect(px + 1, py + 1, size - 2, size - 2);
-    context.fillStyle = "rgba(255,255,255,0.12)";
+    context.shadowBlur = 0;
+    context.fillStyle = this.palette.blockHighlight;
     context.fillRect(px + 1, py + 1, size - 2, 4);
+    context.restore();
   }
 
   private drawGrid() {
     const ctx = this.ctx;
-    ctx.strokeStyle = GRID_LINE;
+    ctx.strokeStyle = this.palette.grid;
     ctx.lineWidth = 0.5;
     for (let c = 1; c < COLS; c++) {
       ctx.beginPath();
@@ -341,7 +422,7 @@ export class CaidaEngine {
     ctx.textBaseline = "alphabetic";
     ctx.fillText("SIGUIENTE", boxX, 30);
 
-    ctx.strokeStyle = GRID_LINE;
+    ctx.strokeStyle = this.palette.grid;
     ctx.lineWidth = 1;
     ctx.strokeRect(boxX, boxY, boxSize, boxSize);
 
@@ -361,7 +442,7 @@ export class CaidaEngine {
 
   draw(): void {
     const ctx = this.ctx;
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = this.palette.background;
     ctx.fillRect(0, 0, W, H);
 
     this.drawGrid();

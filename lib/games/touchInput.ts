@@ -60,3 +60,8 @@ export const SERPENTINA_TOUCH_CONFIG: TouchControlsConfig = {
   dpad: ["up", "down", "left", "right"],
   actions: [],
 };
+
+export const RANARIA_TOUCH_CONFIG: TouchControlsConfig = {
+  dpad: ["up", "down", "left", "right"],
+  actions: [],
+};

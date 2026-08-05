@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GAMES } from "@/lib/data";
 import { getGameStats, getLeaderboard } from "@/lib/supabase/scores";
+import { CoverBg } from "@/components/game/CoverBg";
 
 export default async function GameDetailPage({
   params,
@@ -19,7 +20,7 @@ export default async function GameDetailPage({
     <div className="av-detail fade-in">
       <div>
         <div className="detail-cover">
-          <div className={"cover-bg " + game.cover}></div>
+          <CoverBg game={game} />
         </div>
         <div style={{ marginTop: 20 }} className="detail-info">
           <div className="detail-tags">

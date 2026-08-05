@@ -1,13 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CaidaEngine, EngineSnapshot, EngineState } from "./engine";
+import { RanariaEngine, EngineSnapshot, EngineState } from "./engine";
 import { DEFAULT_SKIN, SkinId } from "../skins";
 
 export interface UseGameEngineResult {
-  // Callback ref (no RefObject crudo): mismo motivo que useRocasGame —
-  // evita que React Compiler marque el resto de los valores de este
-  // objeto como "lectura de ref" durante el render.
   canvasRef: (node: HTMLCanvasElement | null) => void;
   score: number;
   lives: number;
@@ -21,20 +18,13 @@ export interface UseGameEngineResult {
   dispose: () => void;
 }
 
-const GAME_KEY_CODES = [
-  "ArrowLeft",
-  "ArrowRight",
-  "ArrowUp",
-  "ArrowDown",
-  "Space",
-  "KeyX",
-];
+const GAME_KEY_CODES = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
 
 // `skin` es reactivo (no solo "valor inicial"): el motor expone setSkin() y
 // este hook lo llama en un efecto cuando cambia, sin forzar un remount del
-// <canvas> (mismo patrón que useRocasGame.ts).
-export function useCaidaGame(skin: SkinId = DEFAULT_SKIN): UseGameEngineResult {
-  const engineRef = useRef<CaidaEngine | null>(null);
+// <canvas> (mismo patrón que useRocasGame.ts/useCaidaGame.ts).
+export function useRanariaGame(skin: SkinId = DEFAULT_SKIN): UseGameEngineResult {
+  const engineRef = useRef<RanariaEngine | null>(null);
   const skinRef = useRef<SkinId>(skin);
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
@@ -42,7 +32,7 @@ export function useCaidaGame(skin: SkinId = DEFAULT_SKIN): UseGameEngineResult {
   const stateRef = useRef<EngineState>("playing");
   const lastSnapshotRef = useRef<EngineSnapshot>({
     score: 0,
-    lives: 1,
+    lives: 3,
     level: 1,
     state: "playing",
   });
@@ -50,7 +40,7 @@ export function useCaidaGame(skin: SkinId = DEFAULT_SKIN): UseGameEngineResult {
   const tickRef = useRef<((ts: number) => void) | null>(null);
 
   const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(1);
+  const [lives, setLives] = useState(3);
   const [level, setLevel] = useState(1);
   const [state, setState] = useState<EngineState>("playing");
   const [paused, setPaused] = useState(false);
@@ -66,23 +56,17 @@ export function useCaidaGame(skin: SkinId = DEFAULT_SKIN): UseGameEngineResult {
     lastTimeRef.current = null;
   }, []);
 
-  // React llama esta función una vez al montar el <canvas> (node) y una
-  // vez al desmontar (node === null) — misma vida útil que un useEffect
-  // con cleanup, sin depender de un RefObject expuesto.
   const canvasRef = useCallback(
     (node: HTMLCanvasElement | null) => {
       teardown();
       if (!node) return;
 
-      const engine = new CaidaEngine(node, skinRef.current);
+      const engine = new RanariaEngine(node, skinRef.current);
       engineRef.current = engine;
       lastSnapshotRef.current = engine.getSnapshot();
       stateRef.current = lastSnapshotRef.current.state;
       pausedRef.current = false;
 
-      // Ignorar teclado mientras está en pausa o con el modal de fin
-      // ("gameover") abierto — evita mover piezas de fondo y capturar
-      // teclas destinadas al input de iniciales del modal.
       const handleKeyDown = (e: KeyboardEvent) => {
         if (pausedRef.current || stateRef.current === "gameover") return;
         if (GAME_KEY_CODES.includes(e.code)) e.preventDefault();
@@ -113,16 +97,12 @@ export function useCaidaGame(skin: SkinId = DEFAULT_SKIN): UseGameEngineResult {
         const snap = activeEngine.getSnapshot();
         const prev = lastSnapshotRef.current;
         if (snap.score !== prev.score) setScore(snap.score);
+        if (snap.lives !== prev.lives) setLives(snap.lives);
         if (snap.level !== prev.level) setLevel(snap.level);
-        if (snap.state !== prev.state) {
-          setState(snap.state);
-          setLives(snap.state === "gameover" ? 0 : 1);
-        }
+        if (snap.state !== prev.state) setState(snap.state);
         lastSnapshotRef.current = snap;
         stateRef.current = snap.state;
 
-        // Gameover detiene el loop (no hay Space-to-restart dentro del
-        // canvas como en ROCAS) — restart() lo vuelve a arrancar.
         rafRef.current =
           snap.state === "gameover" ? null : requestAnimationFrame(tick);
       }
@@ -134,7 +114,7 @@ export function useCaidaGame(skin: SkinId = DEFAULT_SKIN): UseGameEngineResult {
   );
 
   // Cambia la paleta activa en caliente cuando el usuario elige otro skin —
-  // no recrea el canvas ni pierde la partida en curso.
+  // no recrea el canvas ni pierde la ronda en curso.
   useEffect(() => {
     skinRef.current = skin;
     engineRef.current?.setSkin(skin);
@@ -147,7 +127,7 @@ export function useCaidaGame(skin: SkinId = DEFAULT_SKIN): UseGameEngineResult {
 
   const resume = useCallback(() => {
     pausedRef.current = false;
-    lastTimeRef.current = null; // evita salto grande de dt tras reanudar
+    lastTimeRef.current = null;
     setPaused(false);
   }, []);
 
@@ -160,7 +140,6 @@ export function useCaidaGame(skin: SkinId = DEFAULT_SKIN): UseGameEngineResult {
     lastTimeRef.current = null;
     setPaused(false);
     engineRef.current?.restart();
-    // El loop se detuvo al llegar a "gameover" — volver a arrancarlo.
     if (rafRef.current === null && tickRef.current) {
       rafRef.current = requestAnimationFrame(tickRef.current);
     }

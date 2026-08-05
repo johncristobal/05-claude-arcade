@@ -25,6 +25,26 @@ export const SKIN_LABELS: Record<SkinId, string> = {
 // elija otra cosa debe notar un cambio visual.
 export const DEFAULT_SKIN: SkinId = "clasico";
 
+// Placeholders sin motor real — sus skins son variantes CSS de la cover
+// (`.cover-<id>--<skin>` en app/globals.css), no paleta de canvas. Si algún
+// día uno de estos ids recibe un motor real (como pasó con `ranaria`), hay
+// que sacarlo de esta lista: su skin pasa a vivir en su engine.ts, no en CSS.
+export const PLACEHOLDER_GAME_IDS: readonly string[] = [
+  "gloton",
+  "invasores",
+  "duelo-pixel",
+];
+
+// Clase de la cover a aplicar según el skin activo. Para juegos reales o
+// para el skin `clasico` devuelve la clase base sin modificador (el look
+// actual, sin cambios). Solo los placeholders suman `--<skin>`.
+export function coverClassFor(gameId: string, baseCover: string, skin: SkinId): string {
+  if (skin === DEFAULT_SKIN || !PLACEHOLDER_GAME_IDS.includes(gameId)) {
+    return baseCover;
+  }
+  return `${baseCover} ${baseCover}--${skin}`;
+}
+
 const STORAGE_KEY = "av_skin";
 
 function isSkinId(value: string | null): value is SkinId {

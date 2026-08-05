@@ -1,23 +1,23 @@
 # Catálogo de juegos — Arcade Vault
 
-Estado a **2026-08-03**. Fuentes: `lib/data.ts` (catálogo estático), `lib/games/*` (motores), `specs/` y la base de datos Supabase (tablas `games` y `scores`, proyecto `uworqrfrwyjoglantqhi`).
+Estado a **2026-08-04**. Fuentes: `lib/data.ts` (catálogo estático), `lib/games/*` (motores), `specs/` y la base de datos Supabase (tablas `games` y `scores`, proyecto `uworqrfrwyjoglantqhi`).
 
-8 juegos en el catálogo: **4 con motor real jugable**, **4 placeholders visuales** (renderizan la animación falsa de `.game-arena`, sin motor).
+8 juegos en el catálogo: **5 con motor real jugable**, **3 placeholders visuales** (renderizan la animación falsa de `.game-arena`, sin motor).
 
 ---
 
 ## Resumen
 
-| Id              | Título        | Categoría | Estado         | Motor                      | Spec                                       | Partidas (DB) | Mejor score (DB) |
-| --------------- | ------------- | --------- | -------------- | -------------------------- | ------------------------------------------ | ------------- | ---------------- |
-| `rocas`         | ROCAS         | SHOOTER   | ✅ Real        | `lib/games/rocas/`         | [05](specs/05-rocas-juego-real.md)         | 1             | 190              |
-| `caida`         | CAÍDA         | PUZZLE    | ✅ Real        | `lib/games/caida/`         | [07](specs/07-caida-juego-real.md)         | 3             | 3 175            |
-| `bloque-buster` | BLOQUE BUSTER | ARCADE    | ✅ Real        | `lib/games/bloque-buster/` | [08](specs/08-bloque-buster-juego-real.md) | 2             | 70               |
-| `serpentina`    | SERPENTINA    | ARCADE    | ✅ Real        | `lib/games/serpentina/`    | [09](specs/09-serpentina-juego-real.md)    | 1             | 20               |
-| `gloton`        | GLOTÓN        | ARCADE    | ⬜ Placeholder | —                          | —                                          | 0             | 0                |
-| `invasores`     | INVASORES     | SHOOTER   | ⬜ Placeholder | —                          | —                                          | 0             | 0                |
-| `ranaria`       | RANARIA       | ARCADE    | ⬜ Placeholder | —                          | —                                          | 0             | 0                |
-| `duelo-pixel`   | DUELO PIXEL   | VERSUS    | ⬜ Placeholder | —                          | —                                          | 0             | 0                |
+| Id              | Título        | Categoría | Estado         | Motor                      | Spec                                                             | Partidas (DB) | Mejor score (DB) |
+| --------------- | ------------- | --------- | -------------- | -------------------------- | ---------------------------------------------------------------- | ------------- | ---------------- |
+| `rocas`         | ROCAS         | SHOOTER   | ✅ Real        | `lib/games/rocas/`         | [05](specs/05-rocas-juego-real.md)                               | 1             | 190              |
+| `caida`         | CAÍDA         | PUZZLE    | ✅ Real        | `lib/games/caida/`         | [07](specs/07-caida-juego-real.md)                               | 3             | 3 175            |
+| `bloque-buster` | BLOQUE BUSTER | ARCADE    | ✅ Real        | `lib/games/bloque-buster/` | [08](specs/08-bloque-buster-juego-real.md)                       | 2             | 70               |
+| `serpentina`    | SERPENTINA    | ARCADE    | ✅ Real        | `lib/games/serpentina/`    | [09](specs/09-serpentina-juego-real.md)                          | 1             | 20               |
+| `ranaria`       | RANARIA       | ARCADE    | ✅ Real        | `lib/games/ranaria/`       | [game-jam/frogger/01](specs/game-jam/frogger/01-frogger-core.md) | 0             | 0                |
+| `gloton`        | GLOTÓN        | ARCADE    | ⬜ Placeholder | —                          | —                                                                | 0             | 0                |
+| `invasores`     | INVASORES     | SHOOTER   | ⬜ Placeholder | —                          | —                                                                | 0             | 0                |
+| `duelo-pixel`   | DUELO PIXEL   | VERSUS    | ⬜ Placeholder | —                          | —                                                                | 0             | 0                |
 
 > Los campos `best` y `plays` de `lib/data.ts` son **decorativos** (valores inventados del mockup original). Los números reales salen de la tabla `scores` — son los de la tabla de arriba.
 
@@ -64,17 +64,26 @@ Estado a **2026-08-03**. Fuentes: `lib/data.ts` (catálogo estático), `lib/game
 - **Vidas:** fijas en 1. **Nivel:** `floor(frutas/5)+1`; el tick baja de 140 ms a un mínimo de 60 ms, 8 ms por nivel.
 - **Puntos:** +10 por fruta.
 
+### RANARIA (`ranaria`) — ARCADE
+
+- **Origen:** diseñado **desde cero** (spec [game-jam/frogger/01-frogger-core](specs/game-jam/frogger/01-frogger-core.md) generado por el subagente `game-jam`, adaptado en implementación a las convenciones del repo — canvas 800×600 en vez de 640×560, `lib/games/ranaria/` en vez de un componente/ruta propios, id `ranaria` reutilizando el placeholder existente en vez del `frogger` nuevo que pedía el spec original).
+- **Archivos:** `lib/games/ranaria/engine.ts`, `useRanariaGame.ts`.
+- **Mecánica:** grilla 20×15 de celdas de 40 px; rana salta 1 celda (120 ms de animación) entre zona segura, carretera (6 carriles de coches/camiones) y río (6 carriles de troncos/tortugas, estas últimas con ciclo de inmersión); 5 bocas destino arriba, hay que llenarlas todas para completar la ronda; contrarreloj por ronda.
+- **Controles:** flechas `↑` `↓` `←` `→`. **Táctil:** D-pad de 4 direcciones, sin botón de acción — igual patrón que `serpentina` (agregado en corrida posterior de `mobile-porter`, ver [Controles táctiles](#controles-táctiles)).
+- **Vidas:** 3, reales. **Nivel:** sube al completar una ronda (5 bocas llenas); velocidad de carriles y tiempo de ronda escalan con el nivel.
+- **Puntos:** +10 por celda de avance nueva en la ronda, +50 y bonus de tiempo por boca ocupada, +200 por ronda completa.
+- **Fuera de alcance:** sprites bitmap, animaciones de muerte, power-ups.
+
 ---
 
 ## Placeholders (sin motor)
 
-Estos 4 ids existen en `lib/data.ts` y en la tabla `games`, tienen ficha, cover CSS y leaderboard funcional, pero `/juegos/<id>/jugar` cae en `NULL_ENGINE` y muestra la animación decorativa en vez de un `<canvas>`.
+Estos 3 ids existen en `lib/data.ts` y en la tabla `games`, tienen ficha, cover CSS y leaderboard funcional, pero `/juegos/<id>/jugar` cae en `NULL_ENGINE` y muestra la animación decorativa en vez de un `<canvas>`.
 
 | Id            | Título      | Categoría | Concepto                                                                  | Candidato a portar desde |
 | ------------- | ----------- | --------- | ------------------------------------------------------------------------- | ------------------------ |
 | `gloton`      | GLOTÓN      | ARCADE    | Pac-Man: laberinto, puntos, 4 fantasmas, píldora que invierte los papeles | desde cero               |
 | `invasores`   | INVASORES   | SHOOTER   | Space Invaders: oleadas en formación, cañón horizontal                    | desde cero               |
-| `ranaria`     | RANARIA     | ARCADE    | Frogger: carriles de coches, troncos, nenúfares, contrarreloj             | desde cero               |
 | `duelo-pixel` | DUELO PIXEL | VERSUS    | Pong: 1 vs CPU o local a dos jugadores                                    | desde cero               |
 
 Para portar cualquiera: `/add-game <juego>` genera el spec, después `/spec-impl NN-<slug>`.
@@ -136,16 +145,16 @@ export interface UseGameEngineResult {
 }
 ```
 
-Comunes a los cuatro: canvas único a resolución nativa escalado por CSS dentro de `.crt-screen`; HUD (Puntuación / Vidas / Nivel) y botones PAUSA / FIN / SALIR compartidos; input ignorado mientras está pausado o con el modal de fin abierto; sin audio; **controles táctiles** en dispositivos `pointer: coarse` (ver abajo); el score se guarda con `saveScore()` en la tabla `scores` de Supabase.
+Comunes a los cinco: canvas único a resolución nativa escalado por CSS dentro de `.crt-screen`; HUD (Puntuación / Vidas / Nivel) y botones PAUSA / FIN / SALIR compartidos; input ignorado mientras está pausado o con el modal de fin abierto; sin audio; **controles táctiles** en dispositivos `pointer: coarse` (ver abajo); el score se guarda con `saveScore()` en la tabla `scores` de Supabase.
 
 ---
 
 ## Controles táctiles
 
-Spec [11](specs/11-controles-tactiles.md) — soporte táctil en los 4 motores reales, visible solo en dispositivos `pointer: coarse` (media query), sin cambios de gameplay ni layout más allá de CSS mínimo.
+Spec [11](specs/11-controles-tactiles.md) — soporte táctil en los 5 motores reales, visible solo en dispositivos `pointer: coarse` (media query), sin cambios de gameplay ni layout más allá de CSS mínimo. `ranaria` quedó fuera del spec original de Frogger ([game-jam/frogger/01](specs/game-jam/frogger/01-frogger-core.md)) y se cerró en una corrida posterior de `mobile-porter` que detectó el juego era layout-responsive pero inoperable en teléfono real sin teclado.
 
-- `lib/games/touchInput.ts` — `useIsTouchDevice()` (SSR-safe), `dispatchKey(code, type)` (despacha `KeyboardEvent` sintético en `window`, reusa los listeners de teclado ya existentes en cada hook) y las configs `ROCAS_TOUCH_CONFIG` / `CAIDA_TOUCH_CONFIG` / `SERPENTINA_TOUCH_CONFIG`.
-- `components/game/TouchControls.tsx` — D-pad + botones de acción, renderizado debajo del `.crt` (bezel completo) en `app/juegos/[id]/jugar/page.tsx`, condicionado a `useIsTouchDevice() && id ∈ {rocas, caida, serpentina}`.
+- `lib/games/touchInput.ts` — `useIsTouchDevice()` (SSR-safe), `dispatchKey(code, type)` (despacha `KeyboardEvent` sintético en `window`, reusa los listeners de teclado ya existentes en cada hook) y las configs `ROCAS_TOUCH_CONFIG` / `CAIDA_TOUCH_CONFIG` / `SERPENTINA_TOUCH_CONFIG` / `RANARIA_TOUCH_CONFIG`.
+- `components/game/TouchControls.tsx` — D-pad + botones de acción, renderizado debajo del `.crt` (bezel completo) en `app/juegos/[id]/jugar/page.tsx`, condicionado a `useIsTouchDevice() && id ∈ {rocas, caida, serpentina, ranaria}`.
 - `bloque-buster` no usa D-pad: `useBloqueBusterGame.ts` agrega `touchstart`/`touchmove` directo sobre el canvas, reusando `engine.handleMouseMove` con el `clientX` del touch (mismo escalado que el mouse).
 - Auto-repeat (interval ~120 ms) solo en `caida` (`repeat: true`), y solo en los botones del D-pad — los botones de acción (`DISPARAR`, `CAER`) nunca auto-repiten aunque el config lo tenga activo, para evitar un hard-drop repetido mientras se mantiene presionado.
 - CSS: `touch-action: none` en el canvas y en los controles, todo bajo `@media (pointer: coarse)` en `app/globals.css`.

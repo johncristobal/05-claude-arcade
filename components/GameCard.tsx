@@ -3,6 +3,7 @@
 import { useRef, type MouseEvent } from "react";
 import Link from "next/link";
 import type { Game } from "@/lib/types";
+import { CoverBg } from "@/components/game/CoverBg";
 
 export function GameCard({ game }: { game: Game }) {
   const tiltRef = useRef<HTMLAnchorElement>(null);
@@ -31,7 +32,7 @@ export function GameCard({ game }: { game: Game }) {
       onMouseLeave={onLeave}
     >
       <div className="cover">
-        <div className={"cover-bg " + game.cover}></div>
+        <CoverBg game={game} />
         <div className="label">{game.cat}</div>
       </div>
       <div className="meta">
@@ -45,7 +46,11 @@ export function GameCard({ game }: { game: Game }) {
           <button
             className={
               "btn " +
-              (game.color === "magenta" ? "magenta" : game.color === "yellow" ? "yellow" : "")
+              (game.color === "magenta"
+                ? "magenta"
+                : game.color === "yellow"
+                  ? "yellow"
+                  : "")
             }
           >
             JUGAR
