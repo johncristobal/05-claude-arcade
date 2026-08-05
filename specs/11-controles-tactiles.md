@@ -98,3 +98,14 @@ export function TouchControls(props: {
 | Auto-repeat mal limpiado deja la pieza moviéndose sola tras soltar el dedo.                        | `clearInterval` en `onTouchEnd`/unmount, mismo patrón de cleanup que ya usan los hooks de juego.                                             |
 | `pointer: coarse` puede fallar en híbridos (laptop táctil + mouse).                                | Aceptado tal cual — es la señal estándar de CSS Media Queries L4; sin detección adicional (fuera de alcance).                                |
 | `touch-action: none` en el canvas podría bloquear gestos de accesibilidad del SO en esa zona.      | Trade-off aceptado, limitado al área de canvas/D-pad, no a la página completa.                                                               |
+
+## Addendum — RANARIA (2026-08-04)
+
+`ranaria` (Frogger, motor real agregado en `specs/game-jam/frogger/01-frogger-core.md`, posterior a este spec) quedó explícitamente fuera de alcance del spec de Frogger. Una corrida de `mobile-porter` (`specs/13-mobile-responsive.md`) detectó que el layout cabía en pantalla chica pero el juego era inoperable en teléfono real sin teclado físico — cero input táctil, `ranaria` ausente de `TOUCH_CONFIGS`.
+
+Cierre, mismo patrón que el resto de este spec (no se reabrió el spec de Frogger ni se tocó `lib/games/ranaria/engine.ts`):
+
+- `RANARIA_TOUCH_CONFIG` en `lib/games/touchInput.ts` — D-pad de 4 direcciones, sin botón de acción (idéntico a `SERPENTINA_TOUCH_CONFIG`, sin auto-repeat: el motor ya ignora `pendingDir` mientras la rana anima el salto).
+- `ranaria` agregado a `TOUCH_CONFIGS` en `app/juegos/[id]/jugar/page.tsx` — el `id ∈ {rocas, caida, serpentina, ranaria}` que condiciona `<TouchControls>` queda actualizado.
+- Sin cambios en `useRanariaGame.ts`: el hook ya escuchaba `keydown` en `window`, `dispatchKey()` reusa ese listener sin tocar el motor — mismo principio que el resto de este spec.
+- Verificado con Playwright usando un contexto `hasTouch: true` + `isMobile: true` (390×844) y `matchMedia("(pointer: coarse)")` forzado a `true` vía init script: D-pad visible con 4 botones, un tap real (`locator.tap()`, no `dispatchEvent` sintético) en ▲ mueve la rana y suma +10 al score.

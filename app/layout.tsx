@@ -1,5 +1,9 @@
-import type { Metadata } from "next";
-import { Press_Start_2P, JetBrains_Mono, Courier_Prime } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import {
+  Press_Start_2P,
+  JetBrains_Mono,
+  Courier_Prime,
+} from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { Nav } from "@/components/Nav";
@@ -24,7 +28,21 @@ const courierPrime = Courier_Prime({
 
 export const metadata: Metadata = {
   title: "Arcade Vault · Portal Retro",
-  description: "Online arcade platform, play games and compete for high scores.",
+  description:
+    "Online arcade platform, play games and compete for high scores.",
+};
+
+// El width/initialScale por defecto de Next 16 ya alcanza (ver
+// node_modules/next/dist/lib/metadata/default-metadata.js:
+// createDefaultViewport() emite width:"device-width", initialScale:1 sin
+// necesidad de export explícito). Lo que sí falta y sí es real: el sitio es
+// permanentemente oscuro (--bg/--bg-2 en app/globals.css, sin modo claro),
+// así que declaramos colorScheme/themeColor para que el navegador móvil
+// pinte su propia UI (barra de estado, scrollbars, controles de formulario)
+// en línea con el tema en vez de asumir claro por defecto.
+export const viewport: Viewport = {
+  themeColor: "#0a0a0f",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({

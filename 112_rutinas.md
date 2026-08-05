@@ -10,3 +10,5 @@ Configuración de rutinas para editar, eliminar y recrear tareas programadas
 INTERESANTE: - creamos skill que disparara dos agentes.
 Agentes que ya probamos.
 OJO, debe especificar uno despues del otro, no en paralelo
+
+/spec-impl-game y lanzamos spec frogger

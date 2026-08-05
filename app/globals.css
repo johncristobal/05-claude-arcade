@@ -521,6 +521,24 @@ a { color: inherit; text-decoration: none; }
   filter: drop-shadow(0 0 6px rgba(0,245,255,0.4));
 }
 
+/* ===== Cover art — skins de placeholders (gloton/invasores/duelo-pixel) =====
+   `clasico` es la clase base de arriba, sin modificador (look actual, es el
+   default). `neon`/`retro` se aplican con un `filter` compuesto sobre todo
+   el `.cover-bg` (afecta el composite renderizado, incluidos ::before/::after)
+   en vez de duplicar cada gradiente interno por juego — mismo resultado con
+   una fracción del CSS. Los motores reales (rocas/caida/bloque-buster/
+   serpentina/ranaria) no usan estas clases: su skin vive en el canvas. */
+.cover-glot--neon,
+.cover-invaders--neon,
+.cover-duelo--neon {
+  filter: saturate(1.6) brightness(1.15) drop-shadow(0 0 14px rgba(0,245,255,0.35));
+}
+.cover-glot--retro,
+.cover-invaders--retro,
+.cover-duelo--retro {
+  filter: grayscale(0.4) sepia(0.6) saturate(2) hue-rotate(-14deg) brightness(0.92) contrast(1.05);
+}
+
 /* ===== detail screen ===== */
 .av-detail {
   display: grid;
@@ -612,7 +630,7 @@ a { color: inherit; text-decoration: none; }
 .hud-stat .v { font-family: var(--pixel); font-size: 16px; color: var(--cyan); text-shadow: 0 0 6px rgba(0,245,255,0.5); }
 .hud-stat.lives .v { color: var(--magenta); text-shadow: 0 0 6px rgba(255,0,110,0.5); }
 .hud-stat.level .v { color: var(--yellow); text-shadow: 0 0 6px rgba(245,255,0,0.5); }
-.hud-actions { display: flex; gap: 10px; align-items: center; }
+.hud-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 .skin-selector { display: flex; gap: 6px; align-items: center; margin-right: 6px; }
 .skin-selector .l {
@@ -695,6 +713,30 @@ a { color: inherit; text-decoration: none; }
 .crt-bottom .led::before {
   content: ""; width: 8px; height: 8px; border-radius: 50%;
   background: var(--green); box-shadow: 0 0 6px var(--green);
+}
+
+/* En viewports angostos (~360-390px reales de un teléfono) el padding fijo
+   de 24px + doble borde de .crt le come proporción real al área jugable
+   dentro de .crt-screen (aspect-ratio 4/3). Se reduce padding/radio/sombra
+   para recuperar ancho útil sin tocar el canvas (sigue siendo 800x600
+   lógico, escalado por CSS). */
+@media (max-width: 480px) {
+  .crt {
+    padding: 12px;
+    border-radius: 16px;
+    box-shadow:
+      0 0 0 4px #1b1b22,
+      0 0 0 5px #2a2a35,
+      0 20px 50px -20px rgba(0,245,255,0.3);
+  }
+  .crt-screen { border-radius: 8px / 16px; }
+  .crt-bottom {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    margin-top: 10px;
+  }
 }
 
 /* fake in-screen game */

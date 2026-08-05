@@ -12,6 +12,7 @@ import {
   ROCAS_TOUCH_CONFIG,
   CAIDA_TOUCH_CONFIG,
   SERPENTINA_TOUCH_CONFIG,
+  RANARIA_TOUCH_CONFIG,
   type TouchControlsConfig,
 } from "@/lib/games/touchInput";
 import { TouchControls } from "@/components/game/TouchControls";
@@ -22,6 +23,7 @@ import {
 } from "@/lib/games/caida/useCaidaGame";
 import { useBloqueBusterGame } from "@/lib/games/bloque-buster/useBloqueBusterGame";
 import { useSerpentinaGame } from "@/lib/games/serpentina/useSerpentinaGame";
+import { useRanariaGame } from "@/lib/games/ranaria/useRanariaGame";
 
 // Usado cuando el juego activo no tiene motor real (placeholders fake) —
 // mantiene la forma de UseGameEngineResult para poder destructurar sin
@@ -49,15 +51,17 @@ export default function GamePlayerPage() {
 
   const [skin, setSkin] = useSkinPreference();
   const rocas = useRocasGame(skin);
-  const caida = useCaidaGame();
+  const caida = useCaidaGame(skin);
   const bloqueBuster = useBloqueBusterGame(skin);
   const serpentina = useSerpentinaGame(skin);
+  const ranaria = useRanariaGame(skin);
 
   const REAL_GAME_ENGINES: Record<string, UseGameEngineResult> = {
     rocas,
     caida,
     "bloque-buster": bloqueBuster,
     serpentina,
+    ranaria,
   };
   const engine = game ? REAL_GAME_ENGINES[game.id] : undefined;
   const isReal = !!engine;
@@ -67,6 +71,7 @@ export default function GamePlayerPage() {
     rocas: ROCAS_TOUCH_CONFIG,
     caida: CAIDA_TOUCH_CONFIG,
     serpentina: SERPENTINA_TOUCH_CONFIG,
+    ranaria: RANARIA_TOUCH_CONFIG,
   };
   const touchConfig = game ? TOUCH_CONFIGS[game.id] : undefined;
 
@@ -178,9 +183,7 @@ export default function GamePlayerPage() {
           </div>
         </div>
         <div className="hud-actions">
-          {(game.id === "rocas" ||
-            game.id === "serpentina" ||
-            game.id === "bloque-buster") && (
+          {isReal && (
             <div className="skin-selector">
               <span className="l">SKIN</span>
               {SKIN_IDS.map((id) => (

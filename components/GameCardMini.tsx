@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { Game } from "@/lib/types";
+import { CoverBg } from "@/components/game/CoverBg";
 
 export function GameCardMini({ game }: { game: Game }) {
   return (
     <Link href={`/juegos/${game.id}`} className="mini-card">
       <div className="mini-cover">
-        <div className={"cover-bg " + game.cover}></div>
+        <CoverBg game={game} />
       </div>
       <div className="mini-meta">
         <div className="mini-title">{game.title}</div>
