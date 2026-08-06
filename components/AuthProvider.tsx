@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@/lib/types";
@@ -35,7 +35,7 @@ function deriveUser(session: Session | null): User | null {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const supabase = useRef(createClient()).current;
+  const [supabase] = useState(() => createClient());
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRecovery, setIsRecovery] = useState(false);

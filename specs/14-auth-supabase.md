@@ -1,6 +1,6 @@
 # SPEC 14 — Autenticación real con Supabase
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** `06-leaderboard-real.md` (Approved) — define `saveScore`/`name` de 10 caracteres que este spec reutiliza sin modificar la firma.
 > **Fecha:** 2026-08-06
 > **Objetivo:** Reemplazar la autenticación falsa de `AuthProvider` (localStorage) por Supabase Auth real (email/password, Google y GitHub OAuth, y recuperación de contraseña) sobre las pantallas de registro/login ya existentes, sin volver obligatoria la cuenta para jugar.

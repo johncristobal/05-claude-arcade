@@ -8,7 +8,7 @@ import { useAuth } from "./AuthProvider";
 export function Nav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   const isHome = pathname === "/";
   const isBiblioteca =
@@ -51,7 +51,7 @@ export function Nav() {
           <span className="coin"></span>
           <span>CRÉDITOS · 03</span>
         </div>
-        {user ? (
+        {loading ? null : user ? (
           <button className="btn ghost auth-btn" onClick={signOut}>
             {user.name} ▾
           </button>
