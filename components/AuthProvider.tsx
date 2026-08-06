@@ -1,58 +1,118 @@
 "use client";
 
-import { createContext, useContext, useState, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 import type { User } from "@/lib/types";
 
 interface AuthContextValue {
   user: User | null;
-  login: (user: User) => void;
+  loading: boolean;
+  isRecovery: boolean;
+  login: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: string | null }>;
+  signInWithOAuth: (
+    provider: "google" | "github",
+  ) => Promise<{ error: string | null }>;
   signOut: () => void;
+  resetPasswordForEmail: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function subscribe(callback: () => void) {
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-
-let cachedRaw: string | null = null;
-let cachedUser: User | null = null;
-
-function getSnapshot(): User | null {
-  const raw = localStorage.getItem("av_user");
-  if (raw !== cachedRaw) {
-    cachedRaw = raw;
-    try {
-      cachedUser = raw ? JSON.parse(raw) : null;
-    } catch {
-      cachedUser = null;
-    }
-  }
-  return cachedUser;
-}
-
-function getServerSnapshot(): User | null {
-  return null;
+function deriveUser(session: Session | null): User | null {
+  if (!session?.user?.email) return null;
+  const email = session.user.email;
+  return {
+    id: session.user.id,
+    email,
+    name: email.split("@")[0].toUpperCase().slice(0, 10),
+  };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const storedUser = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [override, setOverride] = useState<{ value: User | null } | null>(null);
-  const user = override ? override.value : storedUser;
+  const supabase = useRef(createClient()).current;
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isRecovery, setIsRecovery] = useState(false);
 
-  const login = (u: User) => {
-    localStorage.setItem("av_user", JSON.stringify(u));
-    setOverride({ value: u });
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(deriveUser(session));
+      setLoading(false);
+    });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        if (event === "PASSWORD_RECOVERY") {
+          setIsRecovery(true);
+        } else if (event === "SIGNED_OUT") {
+          setIsRecovery(false);
+        }
+        setUser(deriveUser(session));
+        setLoading(false);
+      },
+    );
+
+    return () => subscription.subscription.unsubscribe();
+  }, [supabase]);
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error: error ? error.message : null };
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({ email, password });
+    return { error: error ? error.message : null };
+  };
+
+  const signInWithOAuth = async (provider: "google" | "github") => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/` },
+    });
+    return { error: error ? error.message : null };
   };
 
   const signOut = () => {
-    localStorage.removeItem("av_user");
-    setOverride({ value: null });
+    void supabase.auth.signOut();
+  };
+
+  const resetPasswordForEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/iniciar-sesion`,
+    });
+    return { error: error ? error.message : null };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (!error) setIsRecovery(false);
+    return { error: error ? error.message : null };
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isRecovery,
+        login,
+        signUp,
+        signInWithOAuth,
+        signOut,
+        resetPasswordForEmail,
+        updatePassword,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

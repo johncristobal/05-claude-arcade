@@ -14,3 +14,8 @@ Tmb tiene que ser compacto, no saturado
 /spec necesitamos crear la pantalla de registro, login y la autenticacion de nuestra app
 Crea nuvo archivo spec
 OJO, hay que habilitar google y guthbut sigin
+
+### github / google
+oauth login
+- creamos app, ojo con redirect url que proporciona github y google
+- los api key y secret de copian a supabase
