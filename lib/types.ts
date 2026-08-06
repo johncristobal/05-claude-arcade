@@ -21,7 +21,9 @@ export interface ScoreRow {
 }
 
 export interface User {
-  name: string;
+  id: string; // auth.users.id (uuid)
+  email: string;
+  name: string; // derivado de email.split("@")[0], mayúsculas, slice(0, 10)
 }
 
 export interface SavedScore {
