@@ -19,3 +19,7 @@ OJO, hay que habilitar google y guthbut sigin
 oauth login
 - creamos app, ojo con redirect url que proporciona github y google
 - los api key y secret de copian a supabase
+
+### Fixes
+Interensate como al insertysr el login, algunas pantallas y elementos no se ajustan
+Ir rebisnado sitio y manda screens a claude, para que todo quede ajutado con login
