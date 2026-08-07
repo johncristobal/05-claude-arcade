@@ -38,8 +38,8 @@ export default function AuthPage() {
     e.preventDefault();
     setError(null);
 
-    if (tab === "up" && pass.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
+    if (tab === "up" && pass.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres.");
       return;
     }
 
@@ -104,8 +104,8 @@ export default function AuthPage() {
     e.preventDefault();
     setError(null);
 
-    if (newPassword.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
+    if (newPassword.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres.");
       return;
     }
 
