@@ -24,6 +24,8 @@ claude tiene para casi todos (kotllin, swift)
 ayuda a claude a detectar erroresd de codigo, archivos, navegar con mas precision
 
 ### code-simplifier
-elimina redundancias, limpia, refactor
+elimina redundancias, limpia, refactor funciones, etc
 instala plugin y se manda a llamar:
 - simplifica el codigo de...
+
+### security-guidance
