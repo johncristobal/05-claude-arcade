@@ -29,3 +29,21 @@ instala plugin y se manda a llamar:
 - simplifica el codigo de...
 
 ### security-guidance
+mejora seguridad y patrones de hackers
+Vamos a utilizar el plugin de security-guidance. revisa la parte de autenticacion
+
+### remote access
+comparter terminar de claude con otros dispositivos
+/remote-control
+habilita url y la termina se ejecuta donde coloques esa url
+UFFF
+
+### brainstorming
+Superpowers teaches Claude brainstorming, subagent driven development with built in code review, systematic debugging, and red/green TDD. Additionally, it teaches Claude how to author and test new skills.
+
+usa superpowers para hacer un brainstorming, necesito ideas de como monetizar esta app
+
+Muy parecido a spec y spec-impl
+
+### conmtext7
+Documetnacion actualizada, se va a la doc oficial y ultima
